@@ -1,0 +1,763 @@
+/**
+ * SmokeIran Robot Admin Styles
+ * RTL Support for Persian Interface
+ */
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+.sir-wrap {
+    max-width: 1200px;
+    margin: 20px auto;
+    font-family: Tahoma, Arial, sans-serif;
+}
+
+.sir-wrap * {
+    box-sizing: border-box;
+}
+
+.sir-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1d2327;
+    margin-bottom: 5px;
+}
+
+.sir-subtitle {
+    color: #646970;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* ============================================
+   Container & Layout
+   ============================================ */
+
+.sir-container {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+.sir-main-form {
+    flex: 1;
+    background: #fff;
+    padding: 25px;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.sir-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Form Sections
+   ============================================ */
+
+.sir-form-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.sir-form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.sir-form-section h3 {
+    font-size: 16px;
+    color: #1d2327;
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #2271b1;
+}
+
+/* ============================================
+   Form Rows
+   ============================================ */
+
+.sir-form-row {
+    margin-bottom: 20px;
+}
+
+.sir-form-row:last-child {
+    margin-bottom: 0;
+}
+
+.sir-form-row label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1d2327;
+}
+
+.sir-form-row input[type="text"],
+.sir-form-row input[type="password"],
+.sir-form-row textarea,
+.sir-form-row select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    direction: rtl;
+    font-family: Tahoma, Arial, sans-serif;
+}
+
+.sir-form-row textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.sir-form-row input:focus,
+.sir-form-row textarea:focus,
+.sir-form-row select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.sir-help {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+    margin-top: 6px;
+}
+
+.sir-help a {
+    color: #2271b1;
+}
+
+.required {
+    color: #d63638;
+}
+
+/* ============================================
+   Radio Groups
+   ============================================ */
+
+.sir-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.sir-radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.sir-radio-group label:hover {
+    border-color: #2271b1;
+    background: #f6f7f7;
+}
+
+.sir-radio-group input[type="radio"]:checked + span {
+    color: #2271b1;
+    font-weight: 600;
+}
+
+/* ============================================
+   Input Groups
+   ============================================ */
+
+.sir-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.sir-input-group input {
+    flex: 1;
+}
+
+.sir-input-group .button {
+    flex-shrink: 0;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.sir-form-actions {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.button-hero {
+    padding: 12px 30px !important;
+    font-size: 16px !important;
+    height: auto !important;
+}
+
+.button-hero .dashicons {
+    font-size: 20px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* ============================================
+   Sidebar Boxes
+   ============================================ */
+
+.sir-info-box,
+.sir-api-status {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.sir-info-box h4,
+.sir-api-status h4 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.sir-info-box ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sir-info-box li {
+    padding: 6px 0;
+    font-size: 13px;
+    color: #50575e;
+}
+
+/* ============================================
+   Modals
+   ============================================ */
+
+.sir-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sir-modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    direction: rtl;
+}
+
+.sir-modal-close {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #646970;
+    padding: 0;
+    line-height: 1;
+}
+
+.sir-modal-close:hover {
+    color: #d63638;
+}
+
+/* ============================================
+   Progress Steps
+   ============================================ */
+
+.sir-progress-steps {
+    margin: 25px 0;
+}
+
+.sir-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.sir-step:last-child {
+    border-bottom: none;
+}
+
+.sir-step-icon {
+    font-size: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+.sir-step-text {
+    font-size: 14px;
+    color: #1d2327;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+
+.sir-progress-bar {
+    height: 8px;
+    background: #dcdcde;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.sir-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0;
+}
+
+.sir-progress-message {
+    text-align: center;
+    color: #646970;
+    font-size: 13px;
+}
+
+/* ============================================
+   Results
+   ============================================ */
+
+.sir-result-success {
+    text-align: center;
+}
+
+.sir-result-success h2 {
+    color: #00a32a;
+    margin-bottom: 20px;
+}
+
+.sir-result-details {
+    background: #f6f7f7;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+    text-align: right;
+}
+
+.sir-result-details p {
+    margin: 8px 0;
+}
+
+.sir-result-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* ============================================
+   Notices
+   ============================================ */
+
+.sir-notice {
+    margin: 15px 0 !important;
+}
+
+/* ============================================
+   API Status
+   ============================================ */
+
+.sir-api-status .sir-success {
+    color: #00a32a;
+}
+
+.sir-api-status .sir-error {
+    color: #d63638;
+}
+
+.sir-api-status .sir-testing {
+    color: #dba617;
+}
+
+.sir-api-ok {
+    color: #00a32a;
+    margin: 5px 0;
+}
+
+.sir-api-error {
+    color: #d63638;
+    margin: 5px 0;
+}
+
+/* ============================================
+   Prompts Page
+   ============================================ */
+
+.sir-prompts-container {
+    background: #fff;
+    padding: 25px;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.sir-prompts-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #c3c4c7;
+    padding-bottom: 0;
+}
+
+.sir-tab-btn {
+    padding: 12px 20px;
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+}
+
+.sir-tab-btn:hover {
+    background: #fff;
+}
+
+.sir-tab-btn.active {
+    background: #fff;
+    border-bottom: 2px solid #fff;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.sir-prompt-tab {
+    display: none;
+}
+
+.sir-prompt-tab.active {
+    display: block;
+}
+
+.sir-prompt-header {
+    margin-bottom: 20px;
+}
+
+.sir-prompt-header h3 {
+    margin: 0 0 5px 0;
+}
+
+.sir-prompt-header p {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+}
+
+.sir-prompt-editor {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    direction: ltr;
+    text-align: left;
+}
+
+.sir-prompt-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.sir-char-count {
+    font-size: 12px;
+    color: #646970;
+}
+
+.sir-prompts-help {
+    margin-top: 30px;
+    background: #f6f7f7;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.sir-prompts-help h3 {
+    margin-top: 0;
+}
+
+.sir-help-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sir-help-table th,
+.sir-help-table td {
+    padding: 10px;
+    text-align: right;
+    border: 1px solid #ddd;
+}
+
+.sir-help-table th {
+    background: #fff;
+}
+
+.sir-help-table code {
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    direction: ltr;
+}
+
+/* ============================================
+   Settings Page
+   ============================================ */
+
+.sir-settings-container {
+    background: #fff;
+    padding: 25px;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.sir-settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.sir-settings-section h2 {
+    font-size: 18px;
+    margin: 0 0 20px 0;
+    color: #1d2327;
+}
+
+.sir-section-desc {
+    color: #646970;
+    margin: -15px 0 20px 0;
+    font-size: 13px;
+}
+
+.sir-fields-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sir-fields-table th,
+.sir-fields-table td {
+    padding: 10px;
+    text-align: right;
+    border: 1px solid #ddd;
+}
+
+.sir-fields-table th {
+    background: #f6f7f7;
+}
+
+.sir-field-input {
+    width: 200px;
+    padding: 6px 10px;
+    font-family: monospace;
+    direction: ltr;
+}
+
+/* ============================================
+   Logs Page
+   ============================================ */
+
+.sir-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.sir-stat-card {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.sir-stat-icon {
+    font-size: 30px;
+}
+
+.sir-stat-number {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1d2327;
+}
+
+.sir-stat-label {
+    display: block;
+    font-size: 12px;
+    color: #646970;
+}
+
+.sir-stat-success {
+    border-color: #00a32a;
+}
+
+.sir-stat-failed {
+    border-color: #d63638;
+}
+
+.sir-logs-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+}
+
+.sir-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.sir-logs-header h2 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.sir-logs-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.sir-logs-table {
+    margin: 0;
+}
+
+.sir-no-logs {
+    text-align: center;
+    color: #646970;
+    padding: 40px !important;
+}
+
+.sir-action-badge,
+.sir-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.sir-status-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.sir-status-failed {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.sir-pagination {
+    padding: 15px 20px;
+    border-top: 1px solid #c3c4c7;
+    text-align: center;
+}
+
+.sir-pagination .page-numbers {
+    padding: 8px 12px;
+    margin: 0 3px;
+    border: 1px solid #ddd;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.sir-pagination .page-numbers.current {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+/* ============================================
+   Manual Research
+   ============================================ */
+
+.sir-manual-research,
+.sir-post-manual-research {
+    margin-top: 15px;
+}
+
+/* ============================================
+   Current Content Preview
+   ============================================ */
+
+.sir-current-content {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f6f7f7;
+    border-radius: 8px;
+}
+
+.sir-current-content h4 {
+    margin: 0 0 10px 0;
+}
+
+#sir-current-content-display {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 782px) {
+    .sir-container {
+        flex-direction: column;
+    }
+    
+    .sir-sidebar {
+        width: 100%;
+    }
+    
+    .sir-radio-group {
+        flex-direction: column;
+    }
+    
+    .sir-input-group {
+        flex-direction: column;
+    }
+    
+    .sir-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .sir-prompts-tabs {
+        flex-wrap: wrap;
+    }
+}
