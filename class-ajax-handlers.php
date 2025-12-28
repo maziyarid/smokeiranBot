@@ -61,23 +61,43 @@ class SIR_Ajax_Handlers {
             
             // Step 1: Research
             if ($research_method === 'auto') {
-                $tavily = new SIR_Tavily_API();
-                $research_data = $tavily->research_product($product_name, $keywords);
+                try {
+                    $tavily = new SIR_Tavily_API();
+                    $research_data = $tavily->research_product($product_name, $keywords);
+                    
+                    if (empty($research_data)) {
+                        throw new Exception('داده‌های تحقیق خالی است. لطفاً روش دستی را امتحان کنید.');
+                    }
+                } catch (Exception $e) {
+                    throw new Exception('خطا در تحقیق خودکار: ' . $e->getMessage());
+                }
             } else {
                 $research_data = $manual_research;
             }
             
             if (empty($research_data)) {
-                wp_send_json_error(['message' => 'داده تحقیق در دسترس نیست']);
+                wp_send_json_error(['message' => 'داده تحقیق در دسترس نیست. لطفاً داده‌های دستی وارد کنید.']);
             }
             
             // Step 2: Generate content
-            $blackbox = new SIR_Blackbox_API();
-            $content = $blackbox->generate_product_content($research_data, $product_name, $keywords);
+            try {
+                $blackbox = new SIR_Blackbox_API();
+                $content = $blackbox->generate_product_content($research_data, $product_name, $keywords);
+                
+                if (empty($content)) {
+                    throw new Exception('محتوای خالی از API دریافت شد');
+                }
+            } catch (Exception $e) {
+                throw new Exception('خطا در تولید محتوا: ' . $e->getMessage());
+            }
             
             // Step 3: Create product
-            $handler = new SIR_Product_Handler();
-            $result = $handler->create_product($content, $publish_status);
+            try {
+                $handler = new SIR_Product_Handler();
+                $result = $handler->create_product($content, $publish_status);
+            } catch (Exception $e) {
+                throw new Exception('خطا در ایجاد محصول: ' . $e->getMessage());
+            }
             
             wp_send_json_success([
                 'message' => '✅ محصول با موفقیت ایجاد شد!',
@@ -91,7 +111,7 @@ class SIR_Ajax_Handlers {
             
         } catch (Exception $e) {
             $this->log_error('create_product', $product_name, $e->getMessage());
-            wp_send_json_error(['message' => $e->getMessage()]);
+            wp_send_json_error(['message' => '❌ ' . $e->getMessage()]);
         }
     }
     
@@ -121,19 +141,43 @@ class SIR_Ajax_Handlers {
             
             // Step 1: Research
             if ($research_method === 'auto') {
-                $tavily = new SIR_Tavily_API();
-                $research_data = $tavily->research_topic($topic, $keywords);
+                try {
+                    $tavily = new SIR_Tavily_API();
+                    $research_data = $tavily->research_topic($topic, $keywords);
+                    
+                    if (empty($research_data)) {
+                        throw new Exception('داده‌های تحقیق خالی است');
+                    }
+                } catch (Exception $e) {
+                    throw new Exception('خطا در تحقیق: ' . $e->getMessage());
+                }
             } else {
                 $research_data = $manual_research;
             }
             
+            if (empty($research_data)) {
+                wp_send_json_error(['message' => 'داده تحقیق در دسترس نیست']);
+            }
+            
             // Step 2: Generate content
-            $blackbox = new SIR_Blackbox_API();
-            $content = $blackbox->generate_post_content($research_data, $topic, $keywords);
+            try {
+                $blackbox = new SIR_Blackbox_API();
+                $content = $blackbox->generate_post_content($research_data, $topic, $keywords);
+                
+                if (empty($content)) {
+                    throw new Exception('محتوای خالی از API دریافت شد');
+                }
+            } catch (Exception $e) {
+                throw new Exception('خطا در تولید محتوا: ' . $e->getMessage());
+            }
             
             // Step 3: Create post
-            $handler = new SIR_Post_Handler();
-            $result = $handler->create_post($content, $publish_status);
+            try {
+                $handler = new SIR_Post_Handler();
+                $result = $handler->create_post($content, $publish_status);
+            } catch (Exception $e) {
+                throw new Exception('خطا در ایجاد پست: ' . $e->getMessage());
+            }
             
             wp_send_json_success([
                 'message' => '✅ پست با موفقیت ایجاد شد!',
@@ -145,7 +189,7 @@ class SIR_Ajax_Handlers {
             
         } catch (Exception $e) {
             $this->log_error('create_post', $topic, $e->getMessage());
-            wp_send_json_error(['message' => $e->getMessage()]);
+            wp_send_json_error(['message' => '❌ ' . $e->getMessage()]);
         }
     }
     
