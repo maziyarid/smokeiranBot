@@ -184,8 +184,8 @@ class SIR_Blackbox_API {
         }
         
         if (empty($content)) {
-            // Log the response structure for debugging
-            error_log('Blackbox API response structure: ' . print_r($body, true));
+            // Log structure summary for debugging (without sensitive data)
+            error_log('Blackbox API: Empty content. Response has keys: ' . implode(', ', array_keys($body)));
             throw new Exception('محتوای خالی از API دریافت شد. ساختار پاسخ نامعتبر است.');
         }
         

@@ -103,7 +103,9 @@ class SIR_Tavily_API {
         
         if (is_wp_error($response)) {
             $error_msg = $response->get_error_message();
-            error_log("Tavily API Error: {$error_msg}");
+            // Sanitize error message to avoid logging sensitive data
+            $safe_error_msg = preg_replace('/api[_-]?key[:\s]*[^\s]+/i', 'api_key: [REDACTED]', $error_msg);
+            error_log("Tavily API Error: {$safe_error_msg}");
             return ['error' => $error_msg, 'answer' => '', 'sources' => []];
         }
         
@@ -126,7 +128,9 @@ class SIR_Tavily_API {
         // Check for API error in response
         if ($status_code !== 200) {
             $error_msg = $result['error'] ?? $result['message'] ?? "خطای HTTP {$status_code}";
-            error_log("Tavily API Error ({$status_code}): {$error_msg}");
+            // Sanitize error before logging
+            $safe_error = preg_replace('/api[_-]?key[:\s]*[^\s]+/i', 'api_key: [REDACTED]', $error_msg);
+            error_log("Tavily API Error ({$status_code}): {$safe_error}");
             return ['error' => $error_msg, 'answer' => '', 'sources' => []];
         }
         
