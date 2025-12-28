@@ -157,6 +157,26 @@ class SIR_Custom_Fields {
     }
     
     /**
+     * Get supported vape brands
+     * 
+     * @return array List of supported brand names
+     */
+    public static function get_supported_brands() {
+        $brands = [
+            'VOOPOO', 'Vaporesso', 'UWELL', 'GeekVape', 'SMOK', 'Aspire', 'Innokin', 
+            'Lost Vape', 'Eleaf', 'Joyetech', 'Vapefly', 'Vandy Vape', 'Hellvape', 
+            'Wotofo', 'OXVA', 'Freemax', 'Asvape'
+        ];
+        
+        /**
+         * Filter the list of supported vape brands
+         * 
+         * @param array $brands List of brand names
+         */
+        return apply_filters('sir_supported_brands', $brands);
+    }
+    
+    /**
      * Generate custom fields from research data
      */
     public static function generate_from_research($research_data) {
@@ -188,10 +208,8 @@ class SIR_Custom_Fields {
             $fields['resistance_range'] = $match[1] . '-' . $match[2] . 'Ω';
         }
         
-        // Brand extraction
-        $brands = ['VOOPOO', 'Vaporesso', 'UWELL', 'GeekVape', 'SMOK', 'Aspire', 'Innokin', 
-                   'Lost Vape', 'Eleaf', 'Joyetech', 'Vapefly', 'Vandy Vape', 'Hellvape', 
-                   'Wotofo', 'OXVA', 'Freemax', 'Asvape'];
+        // Brand extraction using filterable list
+        $brands = self::get_supported_brands();
         foreach ($brands as $brand) {
             if (stripos($research_data, $brand) !== false) {
                 $fields['brand'] = $brand;
