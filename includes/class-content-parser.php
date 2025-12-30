@@ -63,8 +63,10 @@ class SIR_Content_Parser {
         // Extract sections from content
         $this->extract_sections($raw_content, $parsed);
         
-        // Build full content
-        $parsed['full_content'] = $this->build_full_content($raw_content);
+        // Build full content only if not already set from JSON
+        if (empty($parsed['full_content'])) {
+            $parsed['full_content'] = $this->build_full_content($raw_content);
+        }
         
         // Extract SEO meta if not in JSON
         $this->extract_seo_meta($raw_content, $parsed);
@@ -110,6 +112,58 @@ class SIR_Content_Parser {
         if (isset($json['content'])) {
             $parsed['short_description'] = $json['content']['shortDescription'] ?? '';
             $parsed['faq'] = $json['content']['faq'] ?? [];
+            
+            // Build full content from JSON sections (excluding technical specs that go in custom fields)
+            $content_parts = [];
+            
+            if (!empty($json['content']['introduction'])) {
+                $content_parts[] = "## معرفی محصول\n\n" . $json['content']['introduction'];
+            }
+            
+            if (!empty($json['content']['features'])) {
+                $content_parts[] = "## ویژگی‌های کلیدی\n\n" . (is_array($json['content']['features']) ? implode("\n\n", $json['content']['features']) : $json['content']['features']);
+            }
+            
+            if (!empty($json['content']['usage'])) {
+                $content_parts[] = "## نحوه استفاده\n\n" . (is_array($json['content']['usage']) ? implode("\n\n", $json['content']['usage']) : $json['content']['usage']);
+            }
+            
+            if (!empty($json['content']['maintenance'])) {
+                $content_parts[] = "## نکات نگهداری\n\n" . $json['content']['maintenance'];
+            }
+            
+            if (!empty($json['content']['comparison'])) {
+                $content_parts[] = "## مقایسه با رقبا\n\n" . (is_array($json['content']['comparison']) ? json_encode($json['content']['comparison'], JSON_UNESCAPED_UNICODE) : $json['content']['comparison']);
+            }
+            
+            if (!empty($json['content']['prosAndCons'])) {
+                $pros_cons = $json['content']['prosAndCons'];
+                $pc_text = "## نقاط قوت و ضعف\n\n";
+                if (is_array($pros_cons)) {
+                    if (!empty($pros_cons['pros'])) {
+                        $pc_text .= "### نقاط قوت:\n" . (is_array($pros_cons['pros']) ? implode("\n", array_map(fn($p) => "- $p", $pros_cons['pros'])) : $pros_cons['pros']) . "\n\n";
+                    }
+                    if (!empty($pros_cons['cons'])) {
+                        $pc_text .= "### نقاط ضعف:\n" . (is_array($pros_cons['cons']) ? implode("\n", array_map(fn($c) => "- $c", $pros_cons['cons'])) : $pros_cons['cons']);
+                    }
+                } else {
+                    $pc_text .= $pros_cons;
+                }
+                $content_parts[] = $pc_text;
+            }
+            
+            if (!empty($json['content']['brandStory'])) {
+                $content_parts[] = "## داستان برند\n\n" . $json['content']['brandStory'];
+            }
+            
+            if (!empty($json['content']['warranty'])) {
+                $content_parts[] = "## گارانتی و خدمات\n\n" . $json['content']['warranty'];
+            }
+            
+            // Only set full_content from JSON if we have content parts
+            if (!empty($content_parts)) {
+                $parsed['full_content'] = implode("\n\n---\n\n", $content_parts);
+            }
         }
         
         // Images/Alt texts
@@ -154,7 +208,7 @@ class SIR_Content_Parser {
     }
     
     /**
-     * Build full content (excluding JSON)
+     * Build full content (excluding JSON and technical specs that go to custom fields)
      */
     private function build_full_content($content) {
         // Remove JSON block
@@ -162,6 +216,19 @@ class SIR_Content_Parser {
         
         // Remove meta section (first section)
         $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
+        
+        // Remove technical specifications section (بخش ۶) as it goes into custom fields
+        $content = preg_replace('/### بخش ۶:.*?مشخصات فنی.*?(?=### بخش ۷:|### بخش ۸:|## |$)/ms', '', $content);
+        $content = preg_replace('/## مشخصات فنی.*?(?=## |$)/ms', '', $content);
+        
+        // Remove alt text table section (بخش ۱۵) as it's for images
+        $content = preg_replace('/### بخش ۱۵:.*?متن جایگزین تصاویر.*?(?=### بخش ۱۶:|## |$)/ms', '', $content);
+        
+        // Remove internal linking section (بخش ۱۶)
+        $content = preg_replace('/### بخش ۱۶:.*?لینک‌سازی داخلی.*?(?=### بخش ۱۷:|## |$)/ms', '', $content);
+        
+        // Remove social media captions section (بخش ۱۷)
+        $content = preg_replace('/### بخش ۱۷:.*?کپشن شبکه‌های اجتماعی.*?(?=### بخش ۱۸:|## |$)/ms', '', $content);
         
         return trim($content);
     }
