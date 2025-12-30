@@ -114,9 +114,11 @@ class SIR_Blackbox_API {
         $body = json_decode(wp_remote_retrieve_body($response), true);
         
         if ($status_code !== 200) {
-            $error_msg = isset($body['error']['message']) 
-                ? $body['error']['message'] 
-                : "خطای HTTP {$status_code}";
+            $error_msg = "خطای HTTP {$status_code}";
+            if (isset($body['error']['message'])) {
+                // Sanitize error message
+                $error_msg = sanitize_text_field($body['error']['message']);
+            }
             throw new Exception("خطای API: {$error_msg}");
         }
         
@@ -232,9 +234,12 @@ class SIR_Blackbox_API {
             }
             
             // Provide more detailed error message
-            $error_msg = isset($body['error']['message']) 
-                ? $body['error']['message'] 
-                : "خطای HTTP {$code}";
+            $error_msg = "خطای HTTP {$code}";
+            if (isset($body['error']['message'])) {
+                // Sanitize error message to avoid exposing sensitive information
+                $api_error = sanitize_text_field($body['error']['message']);
+                $error_msg = esc_html($api_error);
+            }
             
             return [
                 'success' => false,
