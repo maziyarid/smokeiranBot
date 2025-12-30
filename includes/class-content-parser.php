@@ -220,32 +220,40 @@ class SIR_Content_Parser {
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
         // Remove SEO metadata section (should not be in product description)
-        $content = preg_replace('/^##\s*متادیتای\s*SEO.*?(?=##\s+[^م]|$)/ms', '', $content);
-        $content = preg_replace('/^###\s*بخش\s*۱:.*?(?=###\s*بخش\s*۲:|##\s+|$)/ms', '', $content);
+        // Pattern: ## متادیتای SEO ... (until next ## or ---)
+        $content = preg_replace('/##\s*متادیتای\s*SEO.*?(?=\n---|\n##|\z)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱:.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove short description section (goes to separate field)
-        $content = preg_replace('/^##\s*توضیح\s*کوتاه\s*محصول.*?(?=##\s+[^ت]|$)/ms', '', $content);
-        $content = preg_replace('/^###\s*بخش\s*۲:.*?(?=###\s*بخش\s*۳:|##\s+|$)/ms', '', $content);
+        // Pattern: ## توضیح کوتاه محصول ... (until next ## or ---)
+        $content = preg_replace('/##\s*توضیح\s*کوتاه\s*محصول.*?(?=\n---|\n##|\z)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۲:.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove technical specifications section (بخش ۶) as it goes into custom fields
-        $content = preg_replace('/###\s*بخش\s*۶:.*?(?=###\s*بخش\s*۷:|###\s*بخش\s*۸:|##\s+|$)/ms', '', $content);
-        $content = preg_replace('/##\s*مشخصات\s*فنی.*?(?=##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۶:.*?(?=\n---|\n##|\z)/ms', '', $content);
+        $content = preg_replace('/##\s*مشخصات\s*فنی.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove FAQ section (goes to separate meta field)
-        $content = preg_replace('/###\s*بخش\s*۱۴:.*?سوالات\s*متداول.*?(?=###\s*بخش\s*۱۵:|##\s+|$)/ms', '', $content);
-        $content = preg_replace('/##\s*سوالات\s*متداول.*?(?=##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۴:.*?(?=\n---|\n##|\z)/ms', '', $content);
+        $content = preg_replace('/##\s*سوالات\s*متداول.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove alt text table section (بخش ۱۵) as it's for images
-        $content = preg_replace('/###\s*بخش\s*۱۵:.*?متن\s*جایگزین.*?(?=###\s*بخش\s*۱۶:|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۵:.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove internal linking section (بخش ۱۶)
-        $content = preg_replace('/###\s*بخش\s*۱۶:.*?لینک.*?(?=###\s*بخش\s*۱۷:|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۶:.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove social media captions section (بخش ۱۷)
-        $content = preg_replace('/###\s*بخش\s*۱۷:.*?کپشن.*?(?=###\s*بخش\s*۱۸:|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۷:.*?(?=\n---|\n##|\z)/ms', '', $content);
         
         // Remove JSON output section (بخش ۱۸)
-        $content = preg_replace('/###\s*بخش\s*۱۸:.*?(?=###\s*بخش|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۸:.*?(?=\n---|\n##|\z)/ms', '', $content);
+        
+        // Clean up multiple consecutive dashes
+        $content = preg_replace('/\n---+\n/m', "\n\n", $content);
+        
+        // Clean up multiple newlines
+        $content = preg_replace('/\n{3,}/m', "\n\n", $content);
         
         return trim($content);
     }
