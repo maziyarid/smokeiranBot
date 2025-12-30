@@ -1,10 +1,10 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$settings = [
+    $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'claude-sonnet-4-20250514'),
+    'claude_model' => get_option('sir_claude_model', 'blackboxai/anthropic/claude-3.5-sonnet'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
 ];
@@ -62,17 +62,29 @@ $settings = [
                 <div class="sir-form-row">
                     <label for="claude_model">مدل Claude</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
-                            Claude Sonnet 4 (پیشنهادی - بهترین نسبت کیفیت/قیمت)
+                        <option value="blackboxai/anthropic/claude-3.5-sonnet" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3.5-sonnet'); ?>>
+                            Claude 3.5 Sonnet (پیشنهادی)
                         </option>
-                        <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
-                            Claude 3.5 Sonnet
+                        <option value="blackboxai/anthropic/claude-3-opus" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-opus'); ?>>
+                            Claude 3 Opus
                         </option>
-                        <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
-                            GPT-4o (OpenAI)
+                        <option value="blackboxai/anthropic/claude-3-sonnet" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-sonnet'); ?>>
+                            Claude 3 Sonnet
                         </option>
-                        <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
-                            GPT-4o Mini (اقتصادی)
+                        <option value="blackboxai/anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-haiku'); ?>>
+                            Claude 3 Haiku
+                        </option>
+                        <option value="blackboxai/openai/gpt-4o" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4o'); ?>>
+                            GPT-4o
+                        </option>
+                        <option value="blackboxai/openai/gpt-4-turbo" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4-turbo'); ?>>
+                            GPT-4 Turbo
+                        </option>
+                        <option value="blackboxai/google/gemini-1.5-pro" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-1.5-pro'); ?>>
+                            Gemini 1.5 Pro
+                        </option>
+                        <option value="blackboxai/openai/gpt-3.5-turbo" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-3.5-turbo'); ?>>
+                            GPT-3.5 Turbo (اقتصادی)
                         </option>
                     </select>
                     <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>

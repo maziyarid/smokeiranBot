@@ -382,7 +382,20 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        $status.html('<span class="sir-success">' + response.message + '</span>');
+                        var html = '<span class="sir-success">' + response.message + '</span>';
+                        
+                        // Display available models for Blackbox API
+                        if (apiType === 'blackbox' && response.available_models && response.available_models.length > 0) {
+                            html += '<div style="margin-top:10px;font-size:12px;color:#666;">';
+                            html += '<strong>مدلهای در دسترس:</strong><br>';
+                            html += response.available_models.slice(0, 5).join('<br>');
+                            if (response.available_models.length > 5) {
+                                html += '<br>و ' + (response.available_models.length - 5) + ' مدل دیگر';
+                            }
+                            html += '</div>';
+                        }
+                        
+                        $status.html(html);
                     } else {
                         $status.html('<span class="sir-error">❌ ' + response.message + '</span>');
                     }
