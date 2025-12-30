@@ -62,12 +62,12 @@ function sir_migrate_model_names() {
     
     // Model migration map - map to valid documented models
     $migration_map = [
-        'claude-sonnet-4-20250514' => 'blackboxai/anthropic/claude-3-haiku',
-        'claude-3-5-sonnet-20241022' => 'blackboxai/anthropic/claude-3-haiku',
-        'blackboxai/anthropic/claude-3.5-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
-        'blackboxai/anthropic/claude-3-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
+        'claude-sonnet-4-20250514' => 'blackboxai/anthropic/claude-3-opus',
+        'claude-3-5-sonnet-20241022' => 'blackboxai/anthropic/claude-3-opus',
+        'blackboxai/anthropic/claude-3.5-sonnet' => 'blackboxai/anthropic/claude-3-opus',
+        'blackboxai/anthropic/claude-3-sonnet' => 'blackboxai/anthropic/claude-3-opus',
         'claude-3-opus' => 'blackboxai/anthropic/claude-3-opus',
-        'claude-3-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
+        'claude-3-sonnet' => 'blackboxai/anthropic/claude-3-opus',
         'claude-3-haiku' => 'blackboxai/anthropic/claude-3-haiku',
         'gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
         'blackboxai/openai/gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
