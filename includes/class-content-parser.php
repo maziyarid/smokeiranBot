@@ -76,6 +76,11 @@ class SIR_Content_Parser {
             $parsed['faq'] = $this->extract_faq($raw_content);
         }
         
+        // Extract custom fields if empty (fallback when no JSON)
+        if (empty($parsed['custom_fields'])) {
+            $parsed['custom_fields'] = SIR_Custom_Fields::generate_from_research($raw_content);
+        }
+        
         return $parsed;
     }
     
@@ -214,21 +219,33 @@ class SIR_Content_Parser {
         // Remove JSON block
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
-        // Remove meta section (first section)
-        $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
+        // Remove SEO metadata section (should not be in product description)
+        $content = preg_replace('/^##\s*متادیتای\s*SEO.*?(?=##\s+[^م]|$)/ms', '', $content);
+        $content = preg_replace('/^###\s*بخش\s*۱:.*?(?=###\s*بخش\s*۲:|##\s+|$)/ms', '', $content);
+        
+        // Remove short description section (goes to separate field)
+        $content = preg_replace('/^##\s*توضیح\s*کوتاه\s*محصول.*?(?=##\s+[^ت]|$)/ms', '', $content);
+        $content = preg_replace('/^###\s*بخش\s*۲:.*?(?=###\s*بخش\s*۳:|##\s+|$)/ms', '', $content);
         
         // Remove technical specifications section (بخش ۶) as it goes into custom fields
-        $content = preg_replace('/### بخش ۶:.*?مشخصات فنی.*?(?=### بخش ۷:|### بخش ۸:|## |$)/ms', '', $content);
-        $content = preg_replace('/## مشخصات فنی.*?(?=## |$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۶:.*?(?=###\s*بخش\s*۷:|###\s*بخش\s*۸:|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/##\s*مشخصات\s*فنی.*?(?=##\s+|$)/ms', '', $content);
+        
+        // Remove FAQ section (goes to separate meta field)
+        $content = preg_replace('/###\s*بخش\s*۱۴:.*?سوالات\s*متداول.*?(?=###\s*بخش\s*۱۵:|##\s+|$)/ms', '', $content);
+        $content = preg_replace('/##\s*سوالات\s*متداول.*?(?=##\s+|$)/ms', '', $content);
         
         // Remove alt text table section (بخش ۱۵) as it's for images
-        $content = preg_replace('/### بخش ۱۵:.*?متن جایگزین تصاویر.*?(?=### بخش ۱۶:|## |$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۵:.*?متن\s*جایگزین.*?(?=###\s*بخش\s*۱۶:|##\s+|$)/ms', '', $content);
         
         // Remove internal linking section (بخش ۱۶)
-        $content = preg_replace('/### بخش ۱۶:.*?لینک‌سازی داخلی.*?(?=### بخش ۱۷:|## |$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۶:.*?لینک.*?(?=###\s*بخش\s*۱۷:|##\s+|$)/ms', '', $content);
         
         // Remove social media captions section (بخش ۱۷)
-        $content = preg_replace('/### بخش ۱۷:.*?کپشن شبکه‌های اجتماعی.*?(?=### بخش ۱۸:|## |$)/ms', '', $content);
+        $content = preg_replace('/###\s*بخش\s*۱۷:.*?کپشن.*?(?=###\s*بخش\s*۱۸:|##\s+|$)/ms', '', $content);
+        
+        // Remove JSON output section (بخش ۱۸)
+        $content = preg_replace('/###\s*بخش\s*۱۸:.*?(?=###\s*بخش|##\s+|$)/ms', '', $content);
         
         return trim($content);
     }
