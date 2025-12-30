@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) exit;
     $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'blackboxai/anthropic/claude-3.5-sonnet'),
+    'claude_model' => get_option('sir_claude_model', 'blackboxai/anthropic/claude-3-haiku'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
 ];
@@ -60,31 +60,28 @@ if (!defined('ABSPATH')) exit;
                 <h2>🤖 تنظیمات مدل</h2>
                 
                 <div class="sir-form-row">
-                    <label for="claude_model">مدل Claude</label>
+                    <label for="claude_model">مدل هوش مصنوعی</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="blackboxai/anthropic/claude-3.5-sonnet" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3.5-sonnet'); ?>>
-                            Claude 3.5 Sonnet (پیشنهادی)
-                        </option>
-                        <option value="blackboxai/anthropic/claude-3-opus" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-opus'); ?>>
-                            Claude 3 Opus
-                        </option>
-                        <option value="blackboxai/anthropic/claude-3-sonnet" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-sonnet'); ?>>
-                            Claude 3 Sonnet
+                        <option value="blackboxai/x-ai/grok-code-fast-1:free" <?php selected($settings['claude_model'], 'blackboxai/x-ai/grok-code-fast-1:free'); ?>>
+                            Grok Code Fast (رایگان - پیشنهادی)
                         </option>
                         <option value="blackboxai/anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-haiku'); ?>>
-                            Claude 3 Haiku
+                            Claude 3 Haiku (سریع و ارزان)
                         </option>
-                        <option value="blackboxai/openai/gpt-4o" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4o'); ?>>
-                            GPT-4o
+                        <option value="blackboxai/anthropic/claude-3-opus" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-opus'); ?>>
+                            Claude 3 Opus (بهترین کیفیت)
                         </option>
-                        <option value="blackboxai/openai/gpt-4-turbo" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4-turbo'); ?>>
-                            GPT-4 Turbo
+                        <option value="blackboxai/amazon/nova-lite-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-lite-v1'); ?>>
+                            Amazon Nova Lite (ارزان)
                         </option>
-                        <option value="blackboxai/google/gemini-1.5-pro" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-1.5-pro'); ?>>
-                            Gemini 1.5 Pro
+                        <option value="blackboxai/amazon/nova-pro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-pro-v1'); ?>>
+                            Amazon Nova Pro (قدرتمند)
                         </option>
-                        <option value="blackboxai/openai/gpt-3.5-turbo" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-3.5-turbo'); ?>>
-                            GPT-3.5 Turbo (اقتصادی)
+                        <option value="blackboxai/google/gemini-2.0-flash-exp:free" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-2.0-flash-exp:free'); ?>>
+                            Gemini 2.0 Flash (رایگان - سریع)
+                        </option>
+                        <option value="blackboxai/agentica-org/deepcoder-14b-preview:free" <?php selected($settings['claude_model'], 'blackboxai/agentica-org/deepcoder-14b-preview:free'); ?>>
+                            Deepcoder 14B (رایگان - برنامه‌نویسی)
                         </option>
                     </select>
                     <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>

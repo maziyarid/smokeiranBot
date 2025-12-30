@@ -51,31 +51,43 @@ function sir_migrate_model_names() {
         'claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022',
         'gpt-4o', 'gpt-4-turbo', 'gpt-4', 
         'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku',
-        'gemini-1.5-pro', 'gpt-3.5-turbo', 'gpt-4o-mini'
+        'gemini-1.5-pro', 'gpt-3.5-turbo', 'gpt-4o-mini',
+        'blackboxai/anthropic/claude-3.5-sonnet',
+        'blackboxai/anthropic/claude-3-sonnet',
+        'blackboxai/openai/gpt-4o',
+        'blackboxai/openai/gpt-4-turbo',
+        'blackboxai/google/gemini-1.5-pro',
+        'blackboxai/openai/gpt-3.5-turbo'
     ];
     
-    // Model migration map
+    // Model migration map - map to valid documented models
     $migration_map = [
-        'claude-sonnet-4-20250514' => 'blackboxai/anthropic/claude-3.5-sonnet',
-        'claude-3-5-sonnet-20241022' => 'blackboxai/anthropic/claude-3.5-sonnet',
+        'claude-sonnet-4-20250514' => 'blackboxai/anthropic/claude-3-haiku',
+        'claude-3-5-sonnet-20241022' => 'blackboxai/anthropic/claude-3-haiku',
+        'blackboxai/anthropic/claude-3.5-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
+        'blackboxai/anthropic/claude-3-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
         'claude-3-opus' => 'blackboxai/anthropic/claude-3-opus',
-        'claude-3-sonnet' => 'blackboxai/anthropic/claude-3-sonnet',
+        'claude-3-sonnet' => 'blackboxai/anthropic/claude-3-haiku',
         'claude-3-haiku' => 'blackboxai/anthropic/claude-3-haiku',
-        'gpt-4o' => 'blackboxai/openai/gpt-4o',
-        'gpt-4-turbo' => 'blackboxai/openai/gpt-4-turbo',
-        'gpt-4' => 'blackboxai/openai/gpt-4-turbo',
-        'gemini-1.5-pro' => 'blackboxai/google/gemini-1.5-pro',
-        'gpt-3.5-turbo' => 'blackboxai/openai/gpt-3.5-turbo',
-        'gpt-4o-mini' => 'blackboxai/openai/gpt-3.5-turbo',
-        'blackboxai' => 'blackboxai/anthropic/claude-3.5-sonnet',
-        'blackboxai-pro' => 'blackboxai/anthropic/claude-3.5-sonnet',
+        'gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
+        'blackboxai/openai/gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
+        'gpt-4-turbo' => 'blackboxai/amazon/nova-pro-v1',
+        'blackboxai/openai/gpt-4-turbo' => 'blackboxai/amazon/nova-pro-v1',
+        'gpt-4' => 'blackboxai/amazon/nova-pro-v1',
+        'gemini-1.5-pro' => 'blackboxai/google/gemini-2.0-flash-exp:free',
+        'blackboxai/google/gemini-1.5-pro' => 'blackboxai/google/gemini-2.0-flash-exp:free',
+        'gpt-3.5-turbo' => 'blackboxai/amazon/nova-lite-v1',
+        'blackboxai/openai/gpt-3.5-turbo' => 'blackboxai/amazon/nova-lite-v1',
+        'gpt-4o-mini' => 'blackboxai/amazon/nova-lite-v1',
+        'blackboxai' => 'blackboxai/x-ai/grok-code-fast-1:free',
+        'blackboxai-pro' => 'blackboxai/anthropic/claude-3-opus',
     ];
     
     // Check if migration is needed
     if (in_array($current_model, $invalid_models)) {
         $new_model = isset($migration_map[$current_model]) 
             ? $migration_map[$current_model] 
-            : 'blackboxai/anthropic/claude-3.5-sonnet';
+            : 'blackboxai/x-ai/grok-code-fast-1:free';
         
         update_option('sir_claude_model', $new_model);
     }
@@ -162,7 +174,7 @@ register_activation_hook(__FILE__, function() {
     $defaults = [
         'sir_blackbox_api_key' => '',
         'sir_tavily_api_key' => '',
-        'sir_claude_model' => 'blackboxai/anthropic/claude-3.5-sonnet',
+        'sir_claude_model' => 'blackboxai/x-ai/grok-code-fast-1:free',
         'sir_auto_publish' => 'draft',
         'sir_enable_logging' => 'yes',
     ];

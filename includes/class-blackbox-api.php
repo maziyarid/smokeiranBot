@@ -15,7 +15,7 @@ class SIR_Blackbox_API {
     
     public function __construct() {
         $this->api_key = trim(get_option('sir_blackbox_api_key', ''));
-        $this->model = get_option('sir_claude_model', 'blackboxai/anthropic/claude-3.5-sonnet');
+        $this->model = get_option('sir_claude_model', 'blackboxai/anthropic/claude-3-haiku');
     }
     
     /**
