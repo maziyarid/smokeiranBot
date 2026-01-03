@@ -9,7 +9,7 @@ class SIR_Blackbox_API {
     
     private $api_key;
     private $model;
-    private $base_url = 'https://cloud.blackbox.ai/api/tasks';
+    private $base_url = 'https://api.blackbox.ai/chat/completions';
     private $timeout = 300;
     
     public function __construct() {
@@ -38,9 +38,14 @@ class SIR_Blackbox_API {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
-                'agent' => $this->model,
-                'prompt' => $full_message,
-                'maxTokens' => $max_tokens,
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => $full_message
+                    ]
+                ],
+                'model' => $this->model,
+                'max_tokens' => $max_tokens,
                 'temperature' => 0.7
             ])
         ]);
@@ -164,9 +169,11 @@ class SIR_Blackbox_API {
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode([
-                    'agent' => $this->model,
-                    'prompt' => 'بگو: اتصال برقرار شد',
-                    'maxTokens' => 50
+                    'messages' => [
+                        ['role' => 'user', 'content' => 'بگو: اتصال برقرار شد']
+                    ],
+                    'model' => $this->model,
+                    'max_tokens' => 50
                 ])
             ]);
             
