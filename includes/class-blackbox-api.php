@@ -112,17 +112,17 @@ class SIR_Blackbox_API {
             $error_msg = '';
             if (isset($body['error']['message'])) {
                 $error_msg = $body['error']['message'];
-            } elseif (isset($body['error'])) {
-                $error_msg = is_string($body['error']) ? $body['error'] : json_encode($body['error']);
+            } elseif (isset($body['error']) && is_string($body['error'])) {
+                $error_msg = $body['error'];
             } elseif (isset($body['message'])) {
                 $error_msg = $body['message'];
             } else {
                 $error_msg = "خطای HTTP {$status_code}";
             }
             
-            // Add raw response for debugging 400 errors
-            if ($status_code === 400 && !empty($body)) {
-                $error_msg .= " | پاسخ: " . json_encode($body, JSON_UNESCAPED_UNICODE);
+            // Log full error details for debugging without exposing in user message
+            if (current_user_can('manage_options') && defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Blackbox API Error: ' . json_encode($body, JSON_UNESCAPED_UNICODE));
             }
             
             throw new Exception("خطای API: {$error_msg}");
