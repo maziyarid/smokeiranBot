@@ -9,7 +9,7 @@ class SIR_Blackbox_API {
     
     private $api_key;
     private $model;
-    private $base_url = 'https://api.blackbox.ai/api/chat';
+    private $base_url = 'https://cloud.blackbox.ai/api/tasks';
     private $timeout = 300;
     
     public function __construct() {
@@ -38,14 +38,9 @@ class SIR_Blackbox_API {
                 'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => $full_message
-                    ]
-                ],
-                'model' => $this->model,
-                'max_tokens' => $max_tokens,
+                'agent' => $this->model,
+                'prompt' => $full_message,
+                'maxTokens' => $max_tokens,
                 'temperature' => 0.7
             ])
         ]);
@@ -113,9 +108,23 @@ class SIR_Blackbox_API {
         $body = json_decode(wp_remote_retrieve_body($response), true);
         
         if ($status_code !== 200) {
-            $error_msg = isset($body['error']['message']) 
-                ? $body['error']['message'] 
-                : "خطای HTTP {$status_code}";
+            // Enhanced error handling for debugging
+            $error_msg = '';
+            if (isset($body['error']['message'])) {
+                $error_msg = $body['error']['message'];
+            } elseif (isset($body['error'])) {
+                $error_msg = is_string($body['error']) ? $body['error'] : json_encode($body['error']);
+            } elseif (isset($body['message'])) {
+                $error_msg = $body['message'];
+            } else {
+                $error_msg = "خطای HTTP {$status_code}";
+            }
+            
+            // Add raw response for debugging 400 errors
+            if ($status_code === 400 && !empty($body)) {
+                $error_msg .= " | پاسخ: " . json_encode($body, JSON_UNESCAPED_UNICODE);
+            }
+            
             throw new Exception("خطای API: {$error_msg}");
         }
         
@@ -130,6 +139,10 @@ class SIR_Blackbox_API {
             $content = $body['text'];
         } elseif (isset($body['content'])) {
             $content = is_array($body['content']) ? $body['content'][0]['text'] : $body['content'];
+        } elseif (isset($body['result'])) {
+            $content = $body['result'];
+        } elseif (isset($body['output'])) {
+            $content = $body['output'];
         }
         
         if (empty($content)) {
@@ -151,11 +164,9 @@ class SIR_Blackbox_API {
                     'Content-Type' => 'application/json',
                 ],
                 'body' => json_encode([
-                    'messages' => [
-                        ['role' => 'user', 'content' => 'بگو: اتصال برقرار شد']
-                    ],
-                    'model' => $this->model,
-                    'max_tokens' => 50
+                    'agent' => $this->model,
+                    'prompt' => 'بگو: اتصال برقرار شد',
+                    'maxTokens' => 50
                 ])
             ]);
             
