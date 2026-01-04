@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) exit;
 $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'claude-sonnet-4-20250514'),
+    'claude_model' => get_option('sir_claude_model', 'blackboxai/x-ai/grok-code-fast-1:free'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
 ];
@@ -60,22 +60,110 @@ $settings = [
                 <h2>🤖 تنظیمات مدل</h2>
                 
                 <div class="sir-form-row">
-                    <label for="claude_model">مدل Claude</label>
+                    <label for="claude_model">مدل هوش مصنوعی</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
-                            Claude Sonnet 4 (پیشنهادی - بهترین نسبت کیفیت/قیمت)
-                        </option>
-                        <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
-                            Claude 3.5 Sonnet
-                        </option>
-                        <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
-                            GPT-4o (OpenAI)
-                        </option>
-                        <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
-                            GPT-4o Mini (اقتصادی)
-                        </option>
+                        <optgroup label="🆓 مدل‌های رایگان (پیشنهادی)">
+                            <option value="blackboxai/x-ai/grok-code-fast-1:free" <?php selected($settings['claude_model'], 'blackboxai/x-ai/grok-code-fast-1:free'); ?>>
+                                xAI Grok Code Fast 1 (رایگان - پیشنهادی)
+                            </option>
+                            <option value="blackboxai/agentica-org/deepcoder-14b-preview:free" <?php selected($settings['claude_model'], 'blackboxai/agentica-org/deepcoder-14b-preview:free'); ?>>
+                                Agentica Deepcoder 14B (رایگان)
+                            </option>
+                        </optgroup>
+                        <optgroup label="🔝 مدل‌های پیشرفته (Premium)">
+                            <option value="blackboxai/anthropic/claude-opus-4" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-opus-4'); ?>>
+                                Claude Opus 4 (بهترین کیفیت)
+                            </option>
+                            <option value="blackboxai/anthropic/claude-sonnet-4" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-sonnet-4'); ?>>
+                                Claude Sonnet 4
+                            </option>
+                            <option value="blackboxai/anthropic/claude-3-5-sonnet" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-5-sonnet'); ?>>
+                                Claude 3.5 Sonnet
+                            </option>
+                            <option value="blackboxai/openai/gpt-4o" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4o'); ?>>
+                                ChatGPT-4o (OpenAI)
+                            </option>
+                            <option value="blackboxai/openai/gpt-4-turbo" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4-turbo'); ?>>
+                                ChatGPT-4 Turbo (OpenAI)
+                            </option>
+                            <option value="blackboxai/google/gemini-pro-1.5" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-pro-1.5'); ?>>
+                                Gemini Pro 1.5 (Google)
+                            </option>
+                            <option value="blackboxai/google/gemini-ultra" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-ultra'); ?>>
+                                Gemini Ultra (Google)
+                            </option>
+                        </optgroup>
+                        <optgroup label="💰 مدل‌های اقتصادی">
+                            <option value="blackboxai/amazon/nova-micro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-micro-v1'); ?>>
+                                Amazon Nova Micro ($0.04 in / $0.14 out)
+                            </option>
+                            <option value="blackboxai/amazon/nova-lite-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-lite-v1'); ?>>
+                                Amazon Nova Lite ($0.06 in / $0.24 out)
+                            </option>
+                            <option value="blackboxai/openai/gpt-4o-mini" <?php selected($settings['claude_model'], 'blackboxai/openai/gpt-4o-mini'); ?>>
+                                ChatGPT-4o Mini ($0.15 in / $0.60 out)
+                            </option>
+                            <option value="blackboxai/ai21/jamba-1.6-mini" <?php selected($settings['claude_model'], 'blackboxai/ai21/jamba-1.6-mini'); ?>>
+                                AI21 Jamba Mini ($0.20 in / $0.40 out)
+                            </option>
+                            <option value="blackboxai/anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-haiku'); ?>>
+                                Claude 3 Haiku ($0.25 in / $1.25 out)
+                            </option>
+                            <option value="blackboxai/google/gemini-flash-1.5" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-flash-1.5'); ?>>
+                                Gemini Flash 1.5 ($0.10 in / $0.30 out)
+                            </option>
+                        </optgroup>
+                        <optgroup label="⚙️ مدل‌های تخصصی">
+                            <option value="blackboxai/aion-labs/aion-1.0-mini" <?php selected($settings['claude_model'], 'blackboxai/aion-labs/aion-1.0-mini'); ?>>
+                                AionLabs Aion Mini ($0.70 in / $1.40 out)
+                            </option>
+                            <option value="blackboxai/amazon/nova-pro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-pro-v1'); ?>>
+                                Amazon Nova Pro ($0.80 in / $3.20 out)
+                            </option>
+                            <option value="blackboxai/ai21/jamba-1.6-large" <?php selected($settings['claude_model'], 'blackboxai/ai21/jamba-1.6-large'); ?>>
+                                AI21 Jamba Large ($2.00 in / $8.00 out)
+                            </option>
+                            <option value="blackboxai/01-ai/yi-large" <?php selected($settings['claude_model'], 'blackboxai/01-ai/yi-large'); ?>>
+                                01.AI Yi Large ($3.00 in / $3.00 out)
+                            </option>
+                            <option value="blackboxai/aion-labs/aion-1.0" <?php selected($settings['claude_model'], 'blackboxai/aion-labs/aion-1.0'); ?>>
+                                AionLabs Aion 1.0 ($4.00 in / $8.00 out)
+                            </option>
+                        </optgroup>
+                        <optgroup label="🤝 عوامل همکار (Background Agents - رایگان)">
+                            <option value="BLACKBOX" <?php selected($settings['claude_model'], 'BLACKBOX'); ?>>
+                                BLACKBOX Agent (رایگان - همکار)
+                            </option>
+                            <option value="Claude Code" <?php selected($settings['claude_model'], 'Claude Code'); ?>>
+                                Claude Code Agent (رایگان - همکار)
+                            </option>
+                            <option value="Codex" <?php selected($settings['claude_model'], 'Codex'); ?>>
+                                Codex Agent (رایگان - همکار)
+                            </option>
+                            <option value="Gemini" <?php selected($settings['claude_model'], 'Gemini'); ?>>
+                                Gemini Agent (رایگان - همکار)
+                            </option>
+                        </optgroup>
                     </select>
-                    <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>
+                    <span class="sir-help">
+                        مدل پیش‌فرض برای تولید محتوا - مدل‌های رایگان برای شروع پیشنهاد می‌شوند
+                        <br>قیمت‌ها به ازای هر میلیون توکن محاسبه می‌شوند
+                        <br><strong>عوامل همکار</strong> برای پردازش پس‌زمینه و بهبود کیفیت استفاده می‌شوند (رایگان)
+                    </span>
+                </div>
+                
+                <div class="sir-form-row">
+                    <label>
+                        <input type="checkbox" 
+                               name="enable_multi_agent" 
+                               value="yes" 
+                               <?php checked(get_option('sir_enable_multi_agent', 'no'), 'yes'); ?>>
+                        فعال‌سازی سیستم چند-عامله (Multi-Agent Orchestration)
+                    </label>
+                    <span class="sir-help">
+                        با فعال‌سازی این گزینه، سیستم از چندین عامل هوش مصنوعی به صورت موازی برای بهبود کیفیت استفاده می‌کند
+                        <br>عوامل همکار: BLACKBOX، Claude Code، Codex، Gemini (همگی رایگان)
+                    </span>
                 </div>
             </div>
             
@@ -107,6 +195,43 @@ $settings = [
                         فعال‌سازی ثبت گزارش عملیات
                     </label>
                     <span class="sir-help">گزارش تمام عملیات‌های تولید و به‌روزرسانی محتوا</span>
+                </div>
+            </div>
+            
+            <!-- Design Settings -->
+            <div class="sir-settings-section">
+                <h2>🎨 تنظیمات طراحی</h2>
+                
+                <div class="sir-form-row">
+                    <label for="primary_color">رنگ اصلی سایت</label>
+                    <div class="sir-input-group">
+                        <input type="color" 
+                               id="primary_color" 
+                               name="primary_color" 
+                               value="<?php echo esc_attr(get_option('sir_primary_color', '#29853a')); ?>"
+                               class="sir-color-picker">
+                        <input type="text" 
+                               id="primary_color_hex" 
+                               value="<?php echo esc_attr(get_option('sir_primary_color', '#29853a')); ?>"
+                               class="sir-color-input"
+                               pattern="^#[0-9A-Fa-f]{6}$"
+                               placeholder="#29853a">
+                    </div>
+                    <span class="sir-help">
+                        این رنگ در جداول و المان‌های HTML تولید شده توسط شورت‌کدهای FSP استفاده می‌شود.
+                        در صورت خالی بودن، از رنگ پیش‌فرض (#29853a) یا رنگ قالب استفاده می‌شود.
+                    </span>
+                </div>
+                
+                <div class="sir-form-row">
+                    <label>
+                        <input type="checkbox" 
+                               name="use_theme_color" 
+                               value="yes" 
+                               <?php checked(get_option('sir_use_theme_color', 'no'), 'yes'); ?>>
+                        استفاده خودکار از رنگ اصلی قالب (در صورت وجود)
+                    </label>
+                    <span class="sir-help">اگر فعال باشد، ابتدا رنگ اصلی قالب با get_theme_mod() دریافت می‌شود</span>
                 </div>
             </div>
             

@@ -20,6 +20,7 @@
             this.checkApiStatus();
             this.initPromptTabs();
             this.initCharCount();
+            this.initColorPicker();
         },
         
         // ============================================
@@ -61,6 +62,9 @@
             // Logs actions
             $('#sir-clear-logs').on('click', this.handleClearLogs);
             $('#sir-export-logs').on('click', this.handleExportLogs);
+            
+            // Queue actions
+            this.initQueuePage();
         },
         
         // ============================================
@@ -558,6 +562,20 @@
             $('#count_' + id).text(count.toLocaleString('fa-IR'));
         },
         
+        initColorPicker: function() {
+            // Sync color picker with text input
+            $('#primary_color').on('input', function() {
+                $('#primary_color_hex').val($(this).val().toUpperCase());
+            });
+            
+            $('#primary_color_hex').on('input', function() {
+                var color = $(this).val();
+                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                    $('#primary_color').val(color);
+                }
+            });
+        },
+        
         // ============================================
         // Modals
         // ============================================
@@ -663,6 +681,418 @@
             var div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        },
+        
+        // ============================================
+        // Queue Management
+        // ============================================
+        
+        initQueuePage: function() {
+            if ($('#sir-queue-table').length === 0) return;
+            
+            // Tab switching
+            $('.sir-tab-btn').on('click', function() {
+                var tab = $(this).data('tab');
+                $('.sir-tab-btn').removeClass('active');
+                $(this).addClass('active');
+                $('.sir-tab-content').removeClass('active');
+                $('#tab-' + tab).addClass('active');
+            });
+            
+            // Single add form
+            $('#sir-add-single-form').on('submit', SIR.handleAddSingleToQueue);
+            
+            // Bulk add form
+            $('#sir-add-bulk-form').on('submit', SIR.handleBulkAddToQueue);
+            
+            // CSV upload form
+            $('#sir-upload-csv-form').on('submit', SIR.handleCsvUpload);
+            
+            // Process queue button
+            $('.sir-process-queue-btn').on('click', SIR.handleProcessQueue);
+            
+            // Refresh queue
+            $('#sir-refresh-queue').on('click', SIR.refreshQueueTable);
+            
+            // Clear completed
+            $('#sir-clear-completed').on('click', SIR.handleClearCompleted);
+            
+            // Delete queue item
+            $(document).on('click', '.sir-delete-btn', SIR.handleDeleteQueueItem);
+            
+            // Retry queue item
+            $(document).on('click', '.sir-retry-btn', SIR.handleRetryQueueItem);
+            
+            // Show error
+            $(document).on('click', '.sir-show-error-btn', SIR.handleShowError);
+            
+            // Filter status
+            $('#sir-filter-status').on('change', SIR.filterQueueItems);
+        },
+        
+        handleAddSingleToQueue: function(e) {
+            e.preventDefault();
+            
+            var $form = $(this);
+            var $btn = $form.find('button[type="submit"]');
+            
+            $btn.prop('disabled', true).text('در حال افزودن...');
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: $form.serialize() + '&action=sir_add_to_queue&nonce=' + sir_ajax.nonce,
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        $form[0].reset();
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                },
+                error: function() {
+                    SIR.showNotice('error', 'خطا در افزودن به صف');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('افزودن به صف');
+                }
+            });
+        },
+        
+        handleBulkAddToQueue: function(e) {
+            e.preventDefault();
+            
+            var $form = $(this);
+            var $btn = $form.find('button[type="submit"]');
+            
+            $btn.prop('disabled', true).text('در حال افزودن...');
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: $form.serialize() + '&action=sir_bulk_add_queue&nonce=' + sir_ajax.nonce,
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        $form[0].reset();
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                },
+                error: function() {
+                    SIR.showNotice('error', 'خطا در افزودن گروهی به صف');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('افزودن گروهی به صف');
+                }
+            });
+        },
+        
+        handleCsvUpload: function(e) {
+            e.preventDefault();
+            
+            var $form = $(this);
+            var $btn = $form.find('button[type="submit"]');
+            var formData = new FormData(this);
+            formData.append('action', 'sir_import_csv');
+            formData.append('nonce', sir_ajax.nonce);
+            
+            $btn.prop('disabled', true).text('در حال آپلود...');
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        $form[0].reset();
+                        
+                        // Show preview
+                        if (response.data.items) {
+                            var html = '<table class="wp-list-table widefat">';
+                            html += '<tr><th>عنوان</th><th>کلیدواژه‌ها</th><th>نوع</th><th>اولویت</th></tr>';
+                            response.data.items.slice(0, 10).forEach(function(item) {
+                                html += '<tr>';
+                                html += '<td>' + SIR.escapeHtml(item.title) + '</td>';
+                                html += '<td>' + SIR.escapeHtml(item.keywords) + '</td>';
+                                html += '<td>' + SIR.escapeHtml(item.item_type) + '</td>';
+                                html += '<td>' + item.priority + '</td>';
+                                html += '</tr>';
+                            });
+                            if (response.data.items.length > 10) {
+                                html += '<tr><td colspan="4">... و ' + (response.data.items.length - 10) + ' مورد دیگر</td></tr>';
+                            }
+                            html += '</table>';
+                            $('#csv-preview-content').html(html);
+                            $('#csv-preview').show();
+                        }
+                        
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                },
+                error: function() {
+                    SIR.showNotice('error', 'خطا در آپلود CSV');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('آپلود و افزودن به صف');
+                }
+            });
+        },
+        
+        handleProcessQueue: function(e) {
+            e.preventDefault();
+            
+            if (!confirm('آیا می‌خواهید پردازش صف را شروع کنید؟\n\nاین عملیات ممکن است چند دقیقه طول بکشد.')) {
+                return;
+            }
+            
+            // Show progress modal
+            $('#sir-queue-progress-modal').fadeIn(200);
+            $('#sir-progress-status').html('<p>در حال پردازش...</p>');
+            $('#sir-progress-log').html('');
+            
+            var processedCount = 0;
+            var totalToProcess = 5; // Process 5 items at a time
+            
+            SIR.processQueueBatch(totalToProcess, function(success, data) {
+                if (success) {
+                    $('#sir-progress-status').html(
+                        '<p>✅ پردازش تکمیل شد</p>' +
+                        '<p>موفق: ' + data.success_count + '</p>' +
+                        '<p>ناموفق: ' + data.failed_count + '</p>'
+                    );
+                    
+                    // Show results
+                    var logHtml = '';
+                    data.results.forEach(function(result) {
+                        if (result.success) {
+                            logHtml += '<div style="color:green;">✅ ' + result.title + '</div>';
+                        } else {
+                            logHtml += '<div style="color:red;">❌ خطا: ' + result.error + '</div>';
+                        }
+                    });
+                    $('#sir-progress-log').html(logHtml);
+                    
+                    $('.sir-progress-fill').css('width', '100%');
+                    
+                    // Refresh table after 2 seconds
+                    setTimeout(function() {
+                        $('#sir-queue-progress-modal').fadeOut(200);
+                        SIR.refreshQueueTable();
+                    }, 2000);
+                } else {
+                    $('#sir-progress-status').html('<p style="color:red;">❌ خطا در پردازش</p>');
+                    setTimeout(function() {
+                        $('#sir-queue-progress-modal').fadeOut(200);
+                    }, 3000);
+                }
+            });
+        },
+        
+        processQueueBatch: function(count, callback) {
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: {
+                    action: 'sir_process_queue',
+                    nonce: sir_ajax.nonce,
+                    count: count
+                },
+                timeout: 600000, // 10 minutes timeout
+                success: function(response) {
+                    if (response.success) {
+                        callback(true, response.data);
+                    } else {
+                        callback(false, response.data);
+                    }
+                },
+                error: function() {
+                    callback(false, {message: 'خطا در ارتباط با سرور'});
+                }
+            });
+        },
+        
+        refreshQueueTable: function() {
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: {
+                    action: 'sir_get_queue_status',
+                    nonce: sir_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update stats
+                        var stats = response.data.stats;
+                        $('.sir-stat-card:eq(0) .sir-stat-value').text(stats.total);
+                        $('.sir-stat-card:eq(1) .sir-stat-value').text(stats.pending);
+                        $('.sir-stat-card:eq(2) .sir-stat-value').text(stats.processing);
+                        $('.sir-stat-card:eq(3) .sir-stat-value').text(stats.completed);
+                        $('.sir-stat-card:eq(4) .sir-stat-value').text(stats.failed);
+                        
+                        // Update table
+                        var items = response.data.items;
+                        var tbody = $('#sir-queue-table tbody');
+                        tbody.empty();
+                        
+                        if (items.length === 0) {
+                            tbody.append('<tr><td colspan="9" style="text-align:center;padding:40px;">📭 صف خالی است</td></tr>');
+                        } else {
+                            items.forEach(function(item) {
+                                var row = SIR.buildQueueTableRow(item);
+                                tbody.append(row);
+                            });
+                        }
+                    }
+                }
+            });
+        },
+        
+        buildQueueTableRow: function(item) {
+            var statusLabels = {
+                'pending': '⏳ در انتظار',
+                'processing': '⚙️ در حال پردازش',
+                'completed': '✅ تکمیل شده',
+                'failed': '❌ ناموفق'
+            };
+            
+            var row = '<tr data-id="' + item.id + '" data-status="' + item.status + '">';
+            row += '<td>' + item.id + '</td>';
+            row += '<td><strong>' + SIR.escapeHtml(item.title) + '</strong></td>';
+            row += '<td><span class="sir-badge sir-badge-' + item.item_type + '">';
+            row += item.item_type === 'product' ? '📦 محصول' : '📝 پست';
+            row += '</span></td>';
+            row += '<td><small>' + SIR.escapeHtml(item.keywords.substring(0, 50)) + (item.keywords.length > 50 ? '...' : '') + '</small></td>';
+            row += '<td><span class="sir-status-badge sir-status-' + item.status + '">' + statusLabels[item.status] + '</span></td>';
+            row += '<td>' + item.priority + '</td>';
+            row += '<td>' + item.created_at + '</td>';
+            row += '<td>' + (item.processed_at || '-') + '</td>';
+            row += '<td class="sir-queue-actions">';
+            
+            if (item.status === 'failed') {
+                row += '<button class="button button-small sir-retry-btn" data-id="' + item.id + '" title="تلاش مجدد">🔄</button>';
+            }
+            
+            if (item.status === 'completed' && item.result_id) {
+                var editLink = item.item_type === 'product' 
+                    ? '/wp-admin/post.php?post=' + item.result_id + '&action=edit'
+                    : '/wp-admin/post.php?post=' + item.result_id + '&action=edit';
+                row += '<a href="' + editLink + '" class="button button-small" target="_blank" title="مشاهده نتیجه">👁️</a>';
+            }
+            
+            row += '<button class="button button-small sir-delete-btn" data-id="' + item.id + '" title="حذف">🗑️</button>';
+            
+            if (item.status === 'failed' && item.error_message) {
+                row += '<button class="button button-small sir-show-error-btn" data-error="' + SIR.escapeHtml(item.error_message) + '" title="مشاهده خطا">⚠️</button>';
+            }
+            
+            row += '</td>';
+            row += '</tr>';
+            
+            return row;
+        },
+        
+        handleDeleteQueueItem: function() {
+            var itemId = $(this).data('id');
+            
+            if (!confirm('آیا مطمئن هستید که می‌خواهید این مورد را حذف کنید؟')) {
+                return;
+            }
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: {
+                    action: 'sir_delete_queue_item',
+                    nonce: sir_ajax.nonce,
+                    item_id: itemId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        $('tr[data-id="' + itemId + '"]').fadeOut(function() {
+                            $(this).remove();
+                        });
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                }
+            });
+        },
+        
+        handleRetryQueueItem: function() {
+            var itemId = $(this).data('id');
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: {
+                    action: 'sir_retry_queue_item',
+                    nonce: sir_ajax.nonce,
+                    item_id: itemId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                }
+            });
+        },
+        
+        handleClearCompleted: function() {
+            if (!confirm('آیا مطمئن هستید که می‌خواهید تمام موارد تکمیل شده را پاک کنید؟')) {
+                return;
+            }
+            
+            $.ajax({
+                url: sir_ajax.url,
+                type: 'POST',
+                data: {
+                    action: 'sir_clear_completed',
+                    nonce: sir_ajax.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        SIR.showNotice('success', response.data.message);
+                        SIR.refreshQueueTable();
+                    } else {
+                        SIR.showNotice('error', response.data.message);
+                    }
+                }
+            });
+        },
+        
+        handleShowError: function() {
+            var error = $(this).data('error');
+            alert('خطا:\n\n' + error);
+        },
+        
+        filterQueueItems: function() {
+            var status = $(this).val();
+            
+            if (status === '') {
+                $('#sir-queue-table tbody tr').show();
+            } else {
+                $('#sir-queue-table tbody tr').each(function() {
+                    var rowStatus = $(this).data('status');
+                    if (rowStatus === status) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
         }
     };
     

@@ -57,8 +57,17 @@ class SIR_Admin_Pages {
         
         add_submenu_page(
             'smokeiran-robot',
+            'صف تولید محتوا',
+            '📋 صف تولید',
+            'manage_options',
+            'smokeiran-queue',
+            [$this, 'render_queue_page']
+        );
+        
+        add_submenu_page(
+            'smokeiran-robot',
             'مدیریت پرامپت‌ها',
-            '📋 پرامپت‌ها',
+            '📝 پرامپت‌ها',
             'manage_options',
             'smokeiran-prompts',
             [$this, 'render_prompts_page']
@@ -152,5 +161,12 @@ class SIR_Admin_Pages {
      */
     public function render_logs_page() {
         include SIR_PLUGIN_DIR . 'admin/views/logs-page.php';
+    }
+    
+    /**
+     * Render queue page
+     */
+    public function render_queue_page() {
+        include SIR_PLUGIN_DIR . 'admin/views/queue-page.php';
     }
 }

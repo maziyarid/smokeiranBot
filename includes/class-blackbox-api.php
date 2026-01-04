@@ -9,12 +9,12 @@ class SIR_Blackbox_API {
     
     private $api_key;
     private $model;
-    private $base_url = 'https://api.blackbox.ai/api/chat';
+    private $base_url = 'https://api.blackbox.ai/v1/chat/completions';
     private $timeout = 300;
     
     public function __construct() {
         $this->api_key = trim(get_option('sir_blackbox_api_key', ''));
-        $this->model = get_option('sir_claude_model', 'claude-sonnet-4-20250514');
+        $this->model = get_option('sir_claude_model', 'blackboxai/x-ai/grok-code-fast-1:free');
     }
     
     /**
@@ -31,23 +31,29 @@ class SIR_Blackbox_API {
         
         $full_message = $prompt . "\n\n---\n\n" . $user_message;
         
+        // Build request body
+        $request_body = [
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $full_message
+                ]
+            ],
+            'model' => $this->model,
+            'max_tokens' => $max_tokens,
+            'temperature' => 0.7,
+            'top_p' => 1,
+            'stream' => false
+        ];
+        
         $response = wp_remote_post($this->base_url, [
             'timeout' => $this->timeout,
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->api_key
             ],
-            'body' => json_encode([
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => $full_message
-                    ]
-                ],
-                'model' => $this->model,
-                'max_tokens' => $max_tokens,
-                'temperature' => 0.7
-            ])
+            'body' => json_encode($request_body),
+            'sslverify' => true
         ]);
         
         return $this->handle_response($response);
@@ -59,14 +65,42 @@ class SIR_Blackbox_API {
     public function generate_product_content($research_data, $product_name, $keywords) {
         $prompt = SIR_Prompts::get_prompt('content');
         
+        // Get primary color
+        $primary_color = $this->get_primary_color();
+        
         $user_message = "## داده‌های تحقیق محصول:\n\n";
         $user_message .= $research_data . "\n\n";
         $user_message .= "## نام محصول: {$product_name}\n\n";
         $user_message .= "## کلیدواژه‌های هدف:\n{$keywords}\n\n";
-        $user_message .= "لطفاً بر اساس پرامپت و داده‌های بالا، محتوای کامل ۱۸ بخشی را به همراه خروجی JSON تولید کن.";
+        $user_message .= "## رنگ اصلی سایت: {$primary_color}\n\n";
+        $user_message .= "لطفاً بر اساس پرامپت و داده‌های بالا، محتوای کامل ۲۲ بخشی را به همراه خروجی JSON تولید کن.";
         $user_message .= "\n\nمطمئن شو تمام فیلدهای سفارشی (customFields) در JSON خروجی پر شده‌اند.";
+        $user_message .= "\n\nدر جداول HTML، از {$primary_color} برای رنگ هدر استفاده کن.";
         
-        return $this->generate($prompt, $user_message);
+        $content = $this->generate($prompt, $user_message);
+        
+        // Replace color placeholder in generated content
+        $content = str_replace('{{PRIMARY_COLOR}}', $primary_color, $content);
+        $content = str_replace('#29853a', $primary_color, $content); // Replace default green
+        
+        return $content;
+    }
+    
+    /**
+     * Get primary color from settings or theme
+     */
+    private function get_primary_color() {
+        // Check if use theme color is enabled
+        if (get_option('sir_use_theme_color') === 'yes') {
+            // Try to get theme's primary color
+            $theme_color = get_theme_mod('primary_color');
+            if (!empty($theme_color)) {
+                return $theme_color;
+            }
+        }
+        
+        // Get from settings or use default
+        return get_option('sir_primary_color', '#29853a');
     }
     
     /**
@@ -147,15 +181,16 @@ class SIR_Blackbox_API {
             $response = wp_remote_post($this->base_url, [
                 'timeout' => 30,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->api_key,
                     'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->api_key
                 ],
                 'body' => json_encode([
                     'messages' => [
-                        ['role' => 'user', 'content' => 'بگو: اتصال برقرار شد']
+                        ['role' => 'user', 'content' => 'Test connection']
                     ],
                     'model' => $this->model,
-                    'max_tokens' => 50
+                    'max_tokens' => 50,
+                    'stream' => false
                 ])
             ]);
             
@@ -167,6 +202,7 @@ class SIR_Blackbox_API {
             }
             
             $code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
             
             if ($code === 200) {
                 return [
@@ -175,9 +211,15 @@ class SIR_Blackbox_API {
                 ];
             }
             
+            // Log detailed error for debugging
+            $error_details = json_decode($body, true);
+            $error_msg = isset($error_details['error']['message']) 
+                ? $error_details['error']['message'] 
+                : $body;
+            
             return [
                 'success' => false,
-                'message' => "خطای HTTP {$code}"
+                'message' => "خطای HTTP {$code}: {$error_msg}"
             ];
             
         } catch (Exception $e) {
