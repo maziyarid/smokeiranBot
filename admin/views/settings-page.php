@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) exit;
 $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'claude-sonnet-4-20250514'),
+    'claude_model' => get_option('sir_claude_model', 'blackboxai/x-ai/grok-code-fast-1:free'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
 ];
@@ -60,22 +60,52 @@ $settings = [
                 <h2>🤖 تنظیمات مدل</h2>
                 
                 <div class="sir-form-row">
-                    <label for="claude_model">مدل Claude</label>
+                    <label for="claude_model">مدل هوش مصنوعی</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
-                            Claude Sonnet 4 (پیشنهادی - بهترین نسبت کیفیت/قیمت)
-                        </option>
-                        <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
-                            Claude 3.5 Sonnet
-                        </option>
-                        <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
-                            GPT-4o (OpenAI)
-                        </option>
-                        <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
-                            GPT-4o Mini (اقتصادی)
-                        </option>
+                        <optgroup label="🆓 مدل‌های رایگان (پیشنهادی)">
+                            <option value="blackboxai/x-ai/grok-code-fast-1:free" <?php selected($settings['claude_model'], 'blackboxai/x-ai/grok-code-fast-1:free'); ?>>
+                                xAI Grok Code Fast 1 (رایگان - پیشنهادی)
+                            </option>
+                            <option value="blackboxai/agentica-org/deepcoder-14b-preview:free" <?php selected($settings['claude_model'], 'blackboxai/agentica-org/deepcoder-14b-preview:free'); ?>>
+                                Agentica Deepcoder 14B (رایگان)
+                            </option>
+                        </optgroup>
+                        <optgroup label="💰 مدل‌های اقتصادی">
+                            <option value="blackboxai/amazon/nova-micro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-micro-v1'); ?>>
+                                Amazon Nova Micro ($0.04 in / $0.14 out)
+                            </option>
+                            <option value="blackboxai/amazon/nova-lite-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-lite-v1'); ?>>
+                                Amazon Nova Lite ($0.06 in / $0.24 out)
+                            </option>
+                            <option value="blackboxai/ai21/jamba-1.6-mini" <?php selected($settings['claude_model'], 'blackboxai/ai21/jamba-1.6-mini'); ?>>
+                                AI21 Jamba Mini ($0.20 in / $0.40 out)
+                            </option>
+                            <option value="blackboxai/anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-haiku'); ?>>
+                                Claude 3 Haiku ($0.25 in / $1.25 out)
+                            </option>
+                        </optgroup>
+                        <optgroup label="⭐ مدل‌های پیشرفته">
+                            <option value="blackboxai/aion-labs/aion-1.0-mini" <?php selected($settings['claude_model'], 'blackboxai/aion-labs/aion-1.0-mini'); ?>>
+                                AionLabs Aion Mini ($0.70 in / $1.40 out)
+                            </option>
+                            <option value="blackboxai/amazon/nova-pro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-pro-v1'); ?>>
+                                Amazon Nova Pro ($0.80 in / $3.20 out)
+                            </option>
+                            <option value="blackboxai/ai21/jamba-1.6-large" <?php selected($settings['claude_model'], 'blackboxai/ai21/jamba-1.6-large'); ?>>
+                                AI21 Jamba Large ($2.00 in / $8.00 out)
+                            </option>
+                            <option value="blackboxai/01-ai/yi-large" <?php selected($settings['claude_model'], 'blackboxai/01-ai/yi-large'); ?>>
+                                01.AI Yi Large ($3.00 in / $3.00 out)
+                            </option>
+                            <option value="blackboxai/aion-labs/aion-1.0" <?php selected($settings['claude_model'], 'blackboxai/aion-labs/aion-1.0'); ?>>
+                                AionLabs Aion 1.0 ($4.00 in / $8.00 out)
+                            </option>
+                        </optgroup>
                     </select>
-                    <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>
+                    <span class="sir-help">
+                        مدل پیش‌فرض برای تولید محتوا - مدل‌های رایگان برای شروع پیشنهاد می‌شوند
+                        <br>قیمت‌ها به ازای هر میلیون توکن محاسبه می‌شوند
+                    </span>
                 </div>
             </div>
             

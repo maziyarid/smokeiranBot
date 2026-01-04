@@ -9,12 +9,12 @@ class SIR_Blackbox_API {
     
     private $api_key;
     private $model;
-    private $base_url = 'https://api.blackbox.ai/api/chat';
+    private $base_url = 'https://api.blackbox.ai/v1/chat/completions';
     private $timeout = 300;
     
     public function __construct() {
         $this->api_key = trim(get_option('sir_blackbox_api_key', ''));
-        $this->model = get_option('sir_claude_model', 'claude-sonnet-4-20250514');
+        $this->model = get_option('sir_claude_model', 'blackboxai/x-ai/grok-code-fast-1:free');
     }
     
     /**
