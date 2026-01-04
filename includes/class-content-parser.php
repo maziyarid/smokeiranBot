@@ -7,6 +7,12 @@ if (!defined('ABSPATH')) exit;
 
 class SIR_Content_Parser {
     
+    // JSON patterns for extraction and removal
+    private const JSON_FENCE_PATTERN = '/```json\s*([\s\S]*?)\s*```/m';
+    private const JSON_FENCE_REMOVE_PATTERN = '/```json\s*[\s\S]*?\s*```/m';
+    // Keys are hardcoded and safe - no user input involved
+    private const JSON_KEYS_PATTERN = '/\{\s*"(?:productName|englishName|keywords|slug|shortDescription|htmlContent|customFields)"[\s\S]*\}\s*$/u';
+    
     /**
      * Parse generated content
      */
@@ -65,6 +71,9 @@ class SIR_Content_Parser {
         
         // Extract JSON block
         $parsed['json_data'] = $this->extract_json($raw_content);
+        
+        // Remove JSON from content BEFORE further processing
+        $raw_content = $this->remove_json_block($raw_content);
         
         // Populate from JSON if available
         if ($parsed['json_data']) {
@@ -127,7 +136,7 @@ class SIR_Content_Parser {
      * Extract JSON from content
      */
     private function extract_json($content) {
-        if (preg_match('/```json\s*([\s\S]*?)\s*```/m', $content, $match)) {
+        if (preg_match(self::JSON_FENCE_PATTERN, $content, $match)) {
             $json_str = trim($match[1]);
             $data = json_decode($json_str, true);
             
@@ -136,6 +145,33 @@ class SIR_Content_Parser {
             }
         }
         return null;
+    }
+    
+    /**
+     * Remove JSON blocks from content
+     */
+    private function remove_json_block($content) {
+        // Remove fenced JSON code blocks (```json ... ```)
+        $content = preg_replace(self::JSON_FENCE_REMOVE_PATTERN, '', $content);
+        
+        // Remove inline JSON objects that start with common keys
+        // This handles JSON at the end of content without code fences
+        $content = preg_replace(self::JSON_KEYS_PATTERN, '', $content);
+        
+        // Remove any trailing JSON object after HTML closing tags
+        $content = preg_replace_callback('/<\/[^>]+>\s*\n*\s*\{[\s\S]*\}\s*$/u', function($matches) {
+            // Extract the closing tag from the match
+            if (preg_match('/<\/[^>]+>/', $matches[0], $tag)) {
+                return $tag[0];
+            }
+            // If extraction fails, return empty string to remove the JSON
+            return '';
+        }, $content);
+        
+        // Remove any other trailing JSON-like structure
+        $content = preg_replace('/\n\s*\{\s*"[a-zA-Z]+"\s*:[\s\S]+?\}\s*$/u', '', $content);
+        
+        return trim($content);
     }
     
     /**
@@ -212,8 +248,11 @@ class SIR_Content_Parser {
      * Build full content (excluding JSON)
      */
     private function build_full_content($content) {
-        // Remove JSON block
-        $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
+        // Remove JSON block (fenced)
+        $content = preg_replace(self::JSON_FENCE_REMOVE_PATTERN, '', $content);
+        
+        // Also remove inline JSON at the end
+        $content = preg_replace(self::JSON_KEYS_PATTERN, '', $content);
         
         // Try to extract בخש ۴ (Section 4) - the full HTML content
         if (preg_match('/(?:بخش\s*۴|Section\s*4):\s*(?:کد HTML|محتوای اصلی).*?\n+([\s\S]+?)(?=\n\n(?:בخش\s*[۱-۹]|Section\s*[1-9])|\z)/us', $content, $match)) {
