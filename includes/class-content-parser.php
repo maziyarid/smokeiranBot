@@ -15,6 +15,9 @@ class SIR_Content_Parser {
             throw new Exception('محتوای خالی برای تجزیه دریافت شد.');
         }
         
+        // Preserve FSP shortcodes in content
+        $raw_content = $this->preserve_fsp_shortcodes($raw_content);
+        
         $parsed = [
             // SEO Fields
             'h1_title' => '',
@@ -26,18 +29,26 @@ class SIR_Content_Parser {
             'short_description' => '',
             'full_content' => '',
             
-            // Sections
+            // Sections (expanded to 22 sections)
             'introduction' => '',
+            'trust_badges' => '',
             'problems_solutions' => '',
             'key_features' => '',
             'technical_specs' => '',
             'usage_guide' => '',
+            'video' => '',
             'maintenance' => '',
             'comparison' => '',
             'variants' => '',
             'pros_cons' => '',
+            'testimonials' => '',
             'brand_story' => '',
             'warranty' => '',
+            'faq' => '',
+            'cta' => '',
+            'alt_texts' => '',
+            'internal_links' => '',
+            'social_content' => '',
             
             // Structured Data
             'faq' => [],
@@ -75,6 +86,41 @@ class SIR_Content_Parser {
         }
         
         return $parsed;
+    }
+    
+    /**
+     * Preserve FSP shortcodes in content
+     */
+    private function preserve_fsp_shortcodes($content) {
+        // FSP shortcodes should remain intact in the content
+        // We don't need to escape them as they'll be processed by WordPress
+        
+        // List of all FSP shortcodes to preserve
+        $fsp_shortcodes = [
+            'fsp_info',
+            'fsp_features', 'fsp_feature',
+            'fsp_highlight',
+            'fsp_accordion', 'fsp_accordion_item',
+            'fsp_columns', 'fsp_column',
+            'fsp_cta',
+            'fsp_button',
+            'fsp_badge',
+            'fsp_gallery',
+            'fsp_video',
+            'fsp_specs', 'fsp_spec',
+            'fsp_faq', 'fsp_faq_item',
+            'fsp_comparison', 'fsp_compare_row',
+            'fsp_testimonial',
+            'fsp_countdown',
+            'fsp_tabs', 'fsp_tab',
+            'fsp_trust', 'fsp_trust_item'
+        ];
+        
+        // The content should already contain proper FSP shortcodes
+        // Just ensure they're not HTML-escaped if they were
+        $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        return $content;
     }
     
     /**
@@ -133,17 +179,26 @@ class SIR_Content_Parser {
      */
     private function extract_sections($content, &$parsed) {
         $section_patterns = [
-            'introduction' => '/## (?:معرفی محصول|بخش ۳).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'problems_solutions' => '/## (?:مشکلات کاربر|بخش ۴).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'key_features' => '/## (?:ویژگی‌های کلیدی|بخش ۵).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'technical_specs' => '/## (?:مشخصات فنی|بخش ۶).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'usage_guide' => '/## (?:نحوه استفاده|بخش ۷).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'maintenance' => '/## (?:نکات نگهداری|بخش ۸).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'comparison' => '/## (?:مقایسه با رقبا|بخش ۹).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'variants' => '/## (?:طعم‌ها|رنگ‌ها|مدل‌ها|بخش ۱۰).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'pros_cons' => '/## (?:نقاط قوت و ضعف|بخش ۱۱).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'brand_story' => '/## (?:داستان برند|بخش ۱۲).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
-            'warranty' => '/## (?:گارانتی|بخش ۱۳).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            // New 22-section structure
+            'introduction' => '/## (?:معرفی محصول|بخش ۴).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'trust_badges' => '/## (?:نشان‌های اعتماد|بخش ۳).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'problems_solutions' => '/## (?:مشکلات کاربر|بخش ۶).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'key_features' => '/## (?:ویژگی‌های کلیدی|بخش ۷).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'technical_specs' => '/## (?:مشخصات فنی|بخش ۸).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'usage_guide' => '/## (?:نحوه استفاده|بخش ۹).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'video' => '/## (?:ویدیو|بخش ۱۰).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'maintenance' => '/## (?:نکات نگهداری|بخش ۱۱).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'comparison' => '/## (?:مقایسه با رقبا|بخش ۱۲).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'variants' => '/## (?:طعم‌ها|رنگ‌ها|مدل‌ها|بخش ۱۳).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'pros_cons' => '/## (?:نقاط قوت و ضعف|بخش ۱۴).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'testimonials' => '/## (?:نظرات|بخش ۱۵).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'brand_story' => '/## (?:داستان برند|بخش ۱۶).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'warranty' => '/## (?:گارانتی|بخش ۱۷).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'faq' => '/## (?:سوالات متداول|بخش ۱۸).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'cta' => '/## (?:فراخوان|بخش ۱۹).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'alt_texts' => '/## (?:متن جایگزین|بخش ۲۰).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'internal_links' => '/## (?:لینک‌سازی|بخش ۲۱).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
+            'social_content' => '/## (?:کپشن|بخش ۲۲).*?\n([\s\S]*?)(?=\n## |\n---|\z)/u',
         ];
         
         foreach ($section_patterns as $key => $pattern) {
@@ -214,7 +269,18 @@ class SIR_Content_Parser {
     private function extract_faq($content) {
         $faqs = [];
         
-        // Pattern 1: Q: / A: format
+        // Pattern 1: FSP FAQ shortcode format
+        if (preg_match_all('/\[fsp_faq_item question="(.+?)"\]([\s\S]*?)\[\/fsp_faq_item\]/u', $content, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $faqs[] = [
+                    'question' => trim($match[1]),
+                    'answer' => trim(strip_tags($match[2]))
+                ];
+            }
+            return $faqs;
+        }
+        
+        // Pattern 2: Q: / A: format
         preg_match_all('/Q:\s*(.+?)\s*\nA:\s*(.+?)(?=\nQ:|\n\n##|\z)/us', $content, $matches, PREG_SET_ORDER);
         
         foreach ($matches as $match) {
@@ -224,7 +290,7 @@ class SIR_Content_Parser {
             ];
         }
         
-        // Pattern 2: **سوال** / پاسخ format
+        // Pattern 3: **سوال** / پاسخ format
         if (empty($faqs)) {
             preg_match_all('/\*\*(.+?)\*\*\s*\n(.+?)(?=\*\*|\n\n##|\z)/us', $content, $matches, PREG_SET_ORDER);
             
