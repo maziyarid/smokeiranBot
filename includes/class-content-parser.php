@@ -215,8 +215,17 @@ class SIR_Content_Parser {
         // Remove JSON block
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
-        // Remove meta section (first section)
-        $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
+        // Remove ALL "بخش X:" markers (AI-generated section markers)
+        // This removes lines like "بخش ۱:", "בخش ۲:", "بخش ۱۰:", etc.
+        $content = preg_replace('/^[\s]*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
+        $content = preg_replace('/^[\s]*###\s*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
+        $content = preg_replace('/^[\s]*##\s*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
+        
+        // Remove "متادیتای SEO" section header
+        $content = preg_replace('/^[\s]*##\s*(?:بخش\s*[\d۰-۹]+\s*[:：]\s*)?متادیتای\s*SEO.*/mu', '', $content);
+        
+        // Remove standalone metadata lines (not in proper HTML format)
+        $content = preg_replace('/^[\s]*[-–—]\s*(?:عنوان صفحه|پیوند یکتا|متا تایتل|متا دسکریپشن).*$/mu', '', $content);
         
         // Convert markdown headers to HTML while preserving FSP shortcodes
         // H2 headers

@@ -461,11 +461,10 @@ PROMPT;
 اکنون بر اساس داده‌های زیر محصول، محتوای عالی تولید کن:
 PROMPT;
     }
-    }
 
-  /**
-   * Default Post Content Prompt
-   */
+    /**
+     * Default Post Content Prompt
+     */
     public static function get_default_post_prompt() {
         return <<<'PROMPT'
 # پرامپت تولید محتوای پست بلاگ برای وبسایت ویپ
