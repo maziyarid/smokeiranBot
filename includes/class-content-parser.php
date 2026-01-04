@@ -10,7 +10,8 @@ class SIR_Content_Parser {
     // JSON patterns for extraction and removal
     private const JSON_FENCE_PATTERN = '/```json\s*([\s\S]*?)\s*```/m';
     private const JSON_FENCE_REMOVE_PATTERN = '/```json\s*[\s\S]*?\s*```/m';
-    private const JSON_KEYS_PATTERN = '(?:productName|englishName|keywords|slug|shortDescription|htmlContent|customFields)';
+    // Keys are hardcoded and safe - no user input involved
+    private const JSON_KEYS_PATTERN = '/\{\s*"(?:productName|englishName|keywords|slug|shortDescription|htmlContent|customFields)"[\s\S]*\}\s*$/u';
     
     /**
      * Parse generated content
@@ -155,8 +156,7 @@ class SIR_Content_Parser {
         
         // Remove inline JSON objects that start with common keys
         // This handles JSON at the end of content without code fences
-        $pattern = '/\{\s*"' . self::JSON_KEYS_PATTERN . '"[\s\S]*\}\s*$/u';
-        $content = preg_replace($pattern, '', $content);
+        $content = preg_replace(self::JSON_KEYS_PATTERN, '', $content);
         
         // Remove any trailing JSON object after HTML closing tags
         $content = preg_replace_callback('/<\/[^>]+>\s*\n*\s*\{[\s\S]*\}\s*$/u', function($matches) {
@@ -164,7 +164,8 @@ class SIR_Content_Parser {
             if (preg_match('/<\/[^>]+>/', $matches[0], $tag)) {
                 return $tag[0];
             }
-            return $matches[0];
+            // If extraction fails, return empty string to remove the JSON
+            return '';
         }, $content);
         
         // Remove any other trailing JSON-like structure
@@ -251,8 +252,7 @@ class SIR_Content_Parser {
         $content = preg_replace(self::JSON_FENCE_REMOVE_PATTERN, '', $content);
         
         // Also remove inline JSON at the end
-        $pattern = '/\{\s*"' . self::JSON_KEYS_PATTERN . '"[\s\S]*\}\s*$/u';
-        $content = preg_replace($pattern, '', $content);
+        $content = preg_replace(self::JSON_KEYS_PATTERN, '', $content);
         
         // Try to extract בخש ۴ (Section 4) - the full HTML content
         if (preg_match('/(?:بخش\s*۴|Section\s*4):\s*(?:کد HTML|محتوای اصلی).*?\n+([\s\S]+?)(?=\n\n(?:בخش\s*[۱-۹]|Section\s*[1-9])|\z)/us', $content, $match)) {
