@@ -67,6 +67,7 @@ final class SmokeIran_Robot {
         require_once SIR_PLUGIN_DIR . 'includes/class-custom-fields.php';
         require_once SIR_PLUGIN_DIR . 'includes/class-product-handler.php';
         require_once SIR_PLUGIN_DIR . 'includes/class-post-handler.php';
+        require_once SIR_PLUGIN_DIR . 'includes/class-queue-manager.php';
         
         // Admin classes
         if (is_admin()) {
@@ -137,21 +138,46 @@ register_activation_hook(__FILE__, function() {
     
     // Create logs table
     global $wpdb;
-    $table_name = $wpdb->prefix . 'sir_logs';
     $charset_collate = $wpdb->get_charset_collate();
     
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+    // Logs table
+    $logs_table = $wpdb->prefix . 'sir_logs';
+    $sql_logs = "CREATE TABLE IF NOT EXISTS $logs_table (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         action_type varchar(50) NOT NULL,
         product_name varchar(255) NOT NULL,
         status varchar(20) NOT NULL,
         message text,
         created_at datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id)
+        PRIMARY KEY (id),
+        KEY action_type (action_type),
+        KEY status (status),
+        KEY created_at (created_at)
+    ) $charset_collate;";
+    
+    // Queue table
+    $queue_table = $wpdb->prefix . 'sir_queue';
+    $sql_queue = "CREATE TABLE IF NOT EXISTS $queue_table (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        item_type varchar(50) NOT NULL DEFAULT 'product',
+        title varchar(255) NOT NULL,
+        keywords text,
+        status varchar(20) NOT NULL DEFAULT 'pending',
+        priority int(11) NOT NULL DEFAULT 0,
+        result_id bigint(20) DEFAULT NULL,
+        error_message text,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        processed_at datetime DEFAULT NULL,
+        PRIMARY KEY (id),
+        KEY item_type (item_type),
+        KEY status (status),
+        KEY priority (priority),
+        KEY created_at (created_at)
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
+    dbDelta($sql_logs);
+    dbDelta($sql_queue);
 });
 
 // Deactivation Hook
