@@ -215,14 +215,23 @@ class SIR_Content_Parser {
         // Remove JSON block
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
-        // Remove ALL "بخش X:" markers (AI-generated section markers)
-        // This removes lines like "بخش ۱:", "בخش ۲:", "بخش ۱۰:", etc.
-        $content = preg_replace('/^[\s]*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
+        // Try to extract בخש ۴ (Section 4) - the full HTML content
+        if (preg_match('/(?:بخش\s*۴|Section\s*4):\s*(?:کد HTML|محتوای اصلی).*?\n+([\s\S]+?)(?=\n\n(?:בخش\s*[۱-۹]|Section\s*[1-9])|\z)/us', $content, $match)) {
+            $html_content = trim($match[1]);
+            // If it's already HTML, return it directly
+            if (preg_match('/<[^>]+>/', $html_content)) {
+                return $html_content;
+            }
+        }
+        
+        // Remove ALL "בخش X:" markers (AI-generated section markers)
+        // This removes lines like "בخش ۱:", "בخش ۲:", "בخش ۱۰:", etc.
+        $content = preg_replace('/^[\s]*בخש\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
         $content = preg_replace('/^[\s]*###\s*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
-        $content = preg_replace('/^[\s]*##\s*بخش\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
+        $content = preg_replace('/^[\s]*##\s*בخש\s*[\d۰-۹]+\s*[:：].*/mu', '', $content);
         
         // Remove "متادیتای SEO" section header
-        $content = preg_replace('/^[\s]*##\s*(?:بخش\s*[\d۰-۹]+\s*[:：]\s*)?متادیتای\s*SEO.*/mu', '', $content);
+        $content = preg_replace('/^[\s]*##\s*(?:בخش\s*[\d۰-۹]+\s*[:：]\s*)?متادیتای\s*SEO.*/mu', '', $content);
         
         // Remove standalone metadata lines (not in proper HTML format)
         $content = preg_replace('/^[\s]*[-–—]\s*(?:عنوان صفحه|پیوند یکتا|متا تایتل|متا دسکریپشن).*$/mu', '', $content);
@@ -324,19 +333,63 @@ class SIR_Content_Parser {
      * Extract SEO meta from content
      */
     private function extract_seo_meta($content, &$parsed) {
-        // H1 Title
+        // H1 Title - Multiple patterns for different formats
         if (empty($parsed['h1_title'])) {
-            if (preg_match('/عنوان صفحه \(H1\):\s*(.+)/u', $content, $match)) {
+            // Pattern 1: New WooCommerce format "בخش ۱: عنوان محصول (H1)"
+            if (preg_match('/(?:بخش\s*۱|Section\s*1):\s*عنوان محصول.*?\n+([^\n]+)/us', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
-            } elseif (preg_match('/^# (.+)$/m', $content, $match)) {
+            }
+            // Pattern 2: Direct label format
+            elseif (preg_match('/عنوان محصول \(H1\):\s*(.+)/u', $content, $match)) {
+                $parsed['h1_title'] = trim($match[1]);
+            }
+            // Pattern 3: Just after section header
+            elseif (preg_match('/###\s*(?:بخش\s*۱|عنوان محصول).*?\n+([^\n#\[<]+)/us', $content, $match)) {
+                $parsed['h1_title'] = trim($match[1]);
+            }
+            // Pattern 4: Markdown H1
+            elseif (preg_match('/^# (.+)$/m', $content, $match)) {
+                $parsed['h1_title'] = trim($match[1]);
+            }
+            // Pattern 5: Look for first meaningful text after בخش 1
+            elseif (preg_match('/بخش\s*۱[^\n]*\n+([^#\n\[<]+)/us', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
             }
         }
         
-        // Slug
+        // Slug - Multiple patterns
         if (empty($parsed['slug'])) {
-            if (preg_match('/پیوند یکتا.*?:\s*([a-z0-9\-]+)/ui', $content, $match)) {
+            // Pattern 1: New WooCommerce format "בخש ۲: پیوند یکتا"
+            if (preg_match('/(?:بخش\s*۲|Section\s*2):\s*پیوند.*?\n+([a-z0-9\-]+)/uis', $content, $match)) {
                 $parsed['slug'] = strtolower(trim($match[1]));
+            }
+            // Pattern 2: Direct label
+            elseif (preg_match('/پیوند یکتا.*?[:：]\s*([a-z0-9\-]+)/ui', $content, $match)) {
+                $parsed['slug'] = strtolower(trim($match[1]));
+            }
+            // Pattern 3: After section marker
+            elseif (preg_match('/###\s*(?:بخش\s*۲|پیوند).*?\n+([a-z0-9\-]+)/uis', $content, $match)) {
+                $parsed['slug'] = strtolower(trim($match[1]));
+            }
+            // Pattern 4: English slug on its own line
+            elseif (preg_match('/\n([a-z0-9\-]{10,})\n/i', $content, $match)) {
+                $parsed['slug'] = strtolower(trim($match[1]));
+            }
+        }
+        
+        // Short Description - Multiple patterns
+        if (empty($parsed['short_description'])) {
+            // Pattern 1: New WooCommerce format "בخش ۳: توضیح کوتاه"
+            if (preg_match('/(?:بخش\s*۳|Section\s*3):\s*توضیح.*?\n+(.+?)(?=\n\n(?:بخش|###|Section)|\z)/us', $content, $match)) {
+                $parsed['short_description'] = trim($match[1]);
+            }
+            // Pattern 2: After section header
+            elseif (preg_match('/###\s*(?:בخش\s*۳|توضیح کوتاه).*?\n+(.+?)(?=\n\n(?:###|בخش)|\z)/us', $content, $match)) {
+                $parsed['short_description'] = trim($match[1]);
+            }
+            // Pattern 3: Direct label
+            elseif (preg_match('/توضیح کوتاه.*?[:：]\s*(.+?)(?=\n\n|\z)/us', $content, $match)) {
+                $parsed['short_description'] = trim($match[1]);
             }
         }
         
@@ -345,6 +398,10 @@ class SIR_Content_Parser {
             if (preg_match('/متا تایتل:\s*(.+)/u', $content, $match)) {
                 $parsed['meta_title'] = trim($match[1]);
             }
+            // Use H1 as fallback
+            elseif (!empty($parsed['h1_title'])) {
+                $parsed['meta_title'] = $parsed['h1_title'];
+            }
         }
         
         // Meta Description
@@ -352,12 +409,9 @@ class SIR_Content_Parser {
             if (preg_match('/متا دسکریپشن:\s*(.+)/u', $content, $match)) {
                 $parsed['meta_description'] = trim($match[1]);
             }
-        }
-        
-        // Short Description
-        if (empty($parsed['short_description'])) {
-            if (preg_match('/### بخش ۲:.*?\n\n(.+?)(?=\n\n|###)/us', $content, $match)) {
-                $parsed['short_description'] = trim($match[1]);
+            // Use short description as fallback
+            elseif (!empty($parsed['short_description'])) {
+                $parsed['meta_description'] = mb_substr($parsed['short_description'], 0, 160);
             }
         }
     }
