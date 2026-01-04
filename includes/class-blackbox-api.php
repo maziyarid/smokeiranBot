@@ -31,23 +31,29 @@ class SIR_Blackbox_API {
         
         $full_message = $prompt . "\n\n---\n\n" . $user_message;
         
+        // Build request body
+        $request_body = [
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => $full_message
+                ]
+            ],
+            'model' => $this->model,
+            'max_tokens' => $max_tokens,
+            'temperature' => 0.7,
+            'top_p' => 1,
+            'stream' => false
+        ];
+        
         $response = wp_remote_post($this->base_url, [
             'timeout' => $this->timeout,
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json',
+                'Authorization' => $this->api_key // Try without 'Bearer' prefix
             ],
-            'body' => json_encode([
-                'messages' => [
-                    [
-                        'role' => 'user',
-                        'content' => $full_message
-                    ]
-                ],
-                'model' => $this->model,
-                'max_tokens' => $max_tokens,
-                'temperature' => 0.7
-            ])
+            'body' => json_encode($request_body),
+            'sslverify' => true
         ]);
         
         return $this->handle_response($response);
@@ -175,15 +181,16 @@ class SIR_Blackbox_API {
             $response = wp_remote_post($this->base_url, [
                 'timeout' => 30,
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->api_key,
                     'Content-Type' => 'application/json',
+                    'Authorization' => $this->api_key
                 ],
                 'body' => json_encode([
                     'messages' => [
-                        ['role' => 'user', 'content' => 'بگو: اتصال برقرار شد']
+                        ['role' => 'user', 'content' => 'Test connection']
                     ],
                     'model' => $this->model,
-                    'max_tokens' => 50
+                    'max_tokens' => 50,
+                    'stream' => false
                 ])
             ]);
             
@@ -195,6 +202,7 @@ class SIR_Blackbox_API {
             }
             
             $code = wp_remote_retrieve_response_code($response);
+            $body = wp_remote_retrieve_body($response);
             
             if ($code === 200) {
                 return [
@@ -203,9 +211,15 @@ class SIR_Blackbox_API {
                 ];
             }
             
+            // Log detailed error for debugging
+            $error_details = json_decode($body, true);
+            $error_msg = isset($error_details['error']['message']) 
+                ? $error_details['error']['message'] 
+                : $body;
+            
             return [
                 'success' => false,
-                'message' => "خطای HTTP {$code}"
+                'message' => "خطای HTTP {$code}: {$error_msg}"
             ];
             
         } catch (Exception $e) {

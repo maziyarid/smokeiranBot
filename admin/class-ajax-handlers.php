@@ -299,6 +299,10 @@ class SIR_Ajax_Handlers {
         $use_theme_color = isset($_POST['use_theme_color']) ? 'yes' : 'no';
         update_option('sir_use_theme_color', $use_theme_color);
         
+        // Save multi-agent setting
+        $enable_multi_agent = isset($_POST['enable_multi_agent']) ? 'yes' : 'no';
+        update_option('sir_enable_multi_agent', $enable_multi_agent);
+        
         // Save field mappings
         if (isset($_POST['field_mapping']) && is_array($_POST['field_mapping'])) {
             $mappings = [];
