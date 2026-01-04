@@ -288,6 +288,17 @@ class SIR_Ajax_Handlers {
         $enable_logging = isset($_POST['enable_logging']) ? 'yes' : 'no';
         update_option('sir_enable_logging', $enable_logging);
         
+        // Save design settings
+        if (isset($_POST['primary_color'])) {
+            $color = sanitize_text_field($_POST['primary_color']);
+            if (preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+                update_option('sir_primary_color', $color);
+            }
+        }
+        
+        $use_theme_color = isset($_POST['use_theme_color']) ? 'yes' : 'no';
+        update_option('sir_use_theme_color', $use_theme_color);
+        
         // Save field mappings
         if (isset($_POST['field_mapping']) && is_array($_POST['field_mapping'])) {
             $mappings = [];

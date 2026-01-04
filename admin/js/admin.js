@@ -20,6 +20,7 @@
             this.checkApiStatus();
             this.initPromptTabs();
             this.initCharCount();
+            this.initColorPicker();
         },
         
         // ============================================
@@ -559,6 +560,20 @@
         updateCharCount: function(id) {
             var count = $('#prompt_' + id).val().length;
             $('#count_' + id).text(count.toLocaleString('fa-IR'));
+        },
+        
+        initColorPicker: function() {
+            // Sync color picker with text input
+            $('#primary_color').on('input', function() {
+                $('#primary_color_hex').val($(this).val().toUpperCase());
+            });
+            
+            $('#primary_color_hex').on('input', function() {
+                var color = $(this).val();
+                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                    $('#primary_color').val(color);
+                }
+            });
         },
         
         // ============================================

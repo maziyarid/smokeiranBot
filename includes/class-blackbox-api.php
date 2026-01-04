@@ -59,14 +59,42 @@ class SIR_Blackbox_API {
     public function generate_product_content($research_data, $product_name, $keywords) {
         $prompt = SIR_Prompts::get_prompt('content');
         
+        // Get primary color
+        $primary_color = $this->get_primary_color();
+        
         $user_message = "## داده‌های تحقیق محصول:\n\n";
         $user_message .= $research_data . "\n\n";
         $user_message .= "## نام محصول: {$product_name}\n\n";
         $user_message .= "## کلیدواژه‌های هدف:\n{$keywords}\n\n";
-        $user_message .= "لطفاً بر اساس پرامپت و داده‌های بالا، محتوای کامل ۱۸ بخشی را به همراه خروجی JSON تولید کن.";
+        $user_message .= "## رنگ اصلی سایت: {$primary_color}\n\n";
+        $user_message .= "لطفاً بر اساس پرامپت و داده‌های بالا، محتوای کامل ۲۲ بخشی را به همراه خروجی JSON تولید کن.";
         $user_message .= "\n\nمطمئن شو تمام فیلدهای سفارشی (customFields) در JSON خروجی پر شده‌اند.";
+        $user_message .= "\n\nدر جداول HTML، از {$primary_color} برای رنگ هدر استفاده کن.";
         
-        return $this->generate($prompt, $user_message);
+        $content = $this->generate($prompt, $user_message);
+        
+        // Replace color placeholder in generated content
+        $content = str_replace('{{PRIMARY_COLOR}}', $primary_color, $content);
+        $content = str_replace('#29853a', $primary_color, $content); // Replace default green
+        
+        return $content;
+    }
+    
+    /**
+     * Get primary color from settings or theme
+     */
+    private function get_primary_color() {
+        // Check if use theme color is enabled
+        if (get_option('sir_use_theme_color') === 'yes') {
+            // Try to get theme's primary color
+            $theme_color = get_theme_mod('primary_color');
+            if (!empty($theme_color)) {
+                return $theme_color;
+            }
+        }
+        
+        // Get from settings or use default
+        return get_option('sir_primary_color', '#29853a');
     }
     
     /**

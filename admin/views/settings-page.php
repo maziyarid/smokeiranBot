@@ -110,6 +110,43 @@ $settings = [
                 </div>
             </div>
             
+            <!-- Design Settings -->
+            <div class="sir-settings-section">
+                <h2>🎨 تنظیمات طراحی</h2>
+                
+                <div class="sir-form-row">
+                    <label for="primary_color">رنگ اصلی سایت</label>
+                    <div class="sir-input-group">
+                        <input type="color" 
+                               id="primary_color" 
+                               name="primary_color" 
+                               value="<?php echo esc_attr(get_option('sir_primary_color', '#29853a')); ?>"
+                               class="sir-color-picker">
+                        <input type="text" 
+                               id="primary_color_hex" 
+                               value="<?php echo esc_attr(get_option('sir_primary_color', '#29853a')); ?>"
+                               class="sir-color-input"
+                               pattern="^#[0-9A-Fa-f]{6}$"
+                               placeholder="#29853a">
+                    </div>
+                    <span class="sir-help">
+                        این رنگ در جداول و المان‌های HTML تولید شده توسط شورت‌کدهای FSP استفاده می‌شود.
+                        در صورت خالی بودن، از رنگ پیش‌فرض (#29853a) یا رنگ قالب استفاده می‌شود.
+                    </span>
+                </div>
+                
+                <div class="sir-form-row">
+                    <label>
+                        <input type="checkbox" 
+                               name="use_theme_color" 
+                               value="yes" 
+                               <?php checked(get_option('sir_use_theme_color', 'no'), 'yes'); ?>>
+                        استفاده خودکار از رنگ اصلی قالب (در صورت وجود)
+                    </label>
+                    <span class="sir-help">اگر فعال باشد، ابتدا رنگ اصلی قالب با get_theme_mod() دریافت می‌شود</span>
+                </div>
+            </div>
+            
             <!-- Custom Fields Mapping -->
             <div class="sir-settings-section">
                 <h2>🗂️ نقشه‌برداری فیلدهای سفارشی</h2>
