@@ -50,7 +50,7 @@ class SIR_Blackbox_API {
             'timeout' => $this->timeout,
             'headers' => [
                 'Content-Type' => 'application/json',
-                'Authorization' => $this->api_key // Try without 'Bearer' prefix
+                'Authorization' => 'Bearer ' . $this->api_key
             ],
             'body' => json_encode($request_body),
             'sslverify' => true
@@ -182,7 +182,7 @@ class SIR_Blackbox_API {
                 'timeout' => 30,
                 'headers' => [
                     'Content-Type' => 'application/json',
-                    'Authorization' => $this->api_key
+                    'Authorization' => 'Bearer ' . $this->api_key
                 ],
                 'body' => json_encode([
                     'messages' => [
