@@ -218,7 +218,97 @@ class SIR_Content_Parser {
         // Remove meta section (first section)
         $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
         
+        // Convert markdown headers to HTML while preserving FSP shortcodes
+        // H2 headers
+        $content = preg_replace('/^## (.+)$/m', '<h2>$1</h2>', $content);
+        
+        // H3 headers
+        $content = preg_replace('/^### (.+)$/m', '<h3>$1</h3>', $content);
+        
+        // H4 headers  
+        $content = preg_replace('/^#### (.+)$/m', '<h4>$1</h4>', $content);
+        
+        // Convert markdown bold to HTML (but not inside shortcodes)
+        $content = preg_replace('/\*\*([^*\[]+)\*\*/u', '<strong>$1</strong>', $content);
+        
+        // Convert markdown lists to HTML
+        $content = $this->convert_markdown_lists($content);
+        
+        // Clean up excessive newlines while preserving shortcodes
+        $content = preg_replace('/\n{3,}/', "\n\n", $content);
+        
+        // Wrap paragraphs (but not shortcodes or HTML tags)
+        $content = $this->wrap_paragraphs($content);
+        
         return trim($content);
+    }
+    
+    /**
+     * Convert markdown lists to HTML
+     */
+    private function convert_markdown_lists($content) {
+        // Unordered lists
+        $content = preg_replace_callback(
+            '/((?:^[\*\-] .+\n)+)/m',
+            function($matches) {
+                $items = preg_split('/\n/', trim($matches[1]));
+                $html = "<ul>\n";
+                foreach ($items as $item) {
+                    if (preg_match('/^[\*\-] (.+)$/', $item, $m)) {
+                        $html .= "<li>" . trim($m[1]) . "</li>\n";
+                    }
+                }
+                $html .= "</ul>\n";
+                return $html;
+            },
+            $content
+        );
+        
+        // Ordered lists
+        $content = preg_replace_callback(
+            '/((?:^\d+\. .+\n)+)/m',
+            function($matches) {
+                $items = preg_split('/\n/', trim($matches[1]));
+                $html = "<ol>\n";
+                foreach ($items as $item) {
+                    if (preg_match('/^\d+\. (.+)$/', $item, $m)) {
+                        $html .= "<li>" . trim($m[1]) . "</li>\n";
+                    }
+                }
+                $html .= "</ol>\n";
+                return $html;
+            },
+            $content
+        );
+        
+        return $content;
+    }
+    
+    /**
+     * Wrap paragraphs in <p> tags
+     */
+    private function wrap_paragraphs($content) {
+        // Split by double newlines
+        $blocks = preg_split('/\n\n+/', $content);
+        $output = [];
+        
+        foreach ($blocks as $block) {
+            $block = trim($block);
+            if (empty($block)) continue;
+            
+            // Don't wrap if it's already HTML, a shortcode, or a heading
+            if (preg_match('/^<[^>]+>/', $block) || 
+                preg_match('/^\[fsp_/', $block) ||
+                preg_match('/^<h[1-6]>/', $block) ||
+                preg_match('/^<table/', $block)) {
+                $output[] = $block;
+            } else {
+                // Wrap as paragraph
+                $output[] = '<p>' . $block . '</p>';
+            }
+        }
+        
+        return implode("\n\n", $output);
     }
     
     /**
