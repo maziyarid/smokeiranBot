@@ -270,6 +270,18 @@ class SIR_Ajax_Handlers {
             update_option('sir_claude_model', sanitize_text_field($_POST['claude_model']));
         }
         
+        // Save color settings
+        if (isset($_POST['primary_color'])) {
+            $color = sanitize_text_field($_POST['primary_color']);
+            // Validate hex color
+            if (preg_match('/^#[a-f0-9]{6}$/i', $color)) {
+                update_option('sir_primary_color', $color);
+            }
+        }
+        
+        $use_theme_color = isset($_POST['use_theme_color']) ? 'yes' : 'no';
+        update_option('sir_use_theme_color', $use_theme_color);
+        
         // Save content settings
         if (isset($_POST['auto_publish'])) {
             update_option('sir_auto_publish', sanitize_text_field($_POST['auto_publish']));

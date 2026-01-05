@@ -25,12 +25,33 @@ class SIR_Product_Handler {
             throw new Exception('محتوای خالی برای ایجاد محصول دریافت شد.');
         }
         
-        // Parse content
+        // Parse content with diagnostic logging
+        if (get_option('sir_enable_logging') === 'yes') {
+            error_log('SIR: Starting product content parsing...');
+        }
+        
         $parsed = $this->parser->parse($raw_content);
         
-        // Validate
+        // Diagnostic logging
+        if (get_option('sir_enable_logging') === 'yes') {
+            error_log('SIR: Parsed title: ' . ($parsed['h1_title'] ?: 'MISSING'));
+            error_log('SIR: Parsed slug: ' . ($parsed['slug'] ?: 'MISSING'));
+            error_log('SIR: Content length: ' . strlen($parsed['full_content']));
+        }
+        
+        // Validate - but be more graceful
         if (empty($parsed['h1_title'])) {
-            throw new Exception('عنوان محصول یافت نشد.');
+            // Try to extract from content
+            if (!empty($parsed['full_content'])) {
+                $parsed['h1_title'] = 'محصول جدید - ' . date('Y-m-d H:i:s');
+            } else {
+                throw new Exception('عنوان محصول یافت نشد و محتوای قابل تجزیه نیست.');
+            }
+        }
+        
+        // Ensure slug exists
+        if (empty($parsed['slug'])) {
+            $parsed['slug'] = sanitize_title($parsed['h1_title']) . '-' . time();
         }
         
         // Create product

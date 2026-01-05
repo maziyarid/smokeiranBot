@@ -4,9 +4,11 @@ if (!defined('ABSPATH')) exit;
 $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'claude-sonnet-4-20250514'),
+    'claude_model' => get_option('sir_claude_model', 'openai/gpt-4o-mini'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
+    'primary_color' => get_option('sir_primary_color', '#e91e63'),
+    'use_theme_color' => get_option('sir_use_theme_color', 'no'),
 ];
 ?>
 <div class="wrap sir-wrap" dir="rtl">
@@ -60,22 +62,100 @@ $settings = [
                 <h2>🤖 تنظیمات مدل</h2>
                 
                 <div class="sir-form-row">
-                    <label for="claude_model">مدل Claude</label>
+                    <label for="claude_model">مدل هوش مصنوعی</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
-                            Claude Sonnet 4 (پیشنهادی - بهترین نسبت کیفیت/قیمت)
-                        </option>
-                        <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
-                            Claude 3.5 Sonnet
-                        </option>
-                        <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
-                            GPT-4o (OpenAI)
-                        </option>
-                        <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
-                            GPT-4o Mini (اقتصادی)
-                        </option>
+                        <optgroup label="اقتصادی و پیشنهادی">
+                            <option value="openai/gpt-4o-mini" <?php selected($settings['claude_model'], 'openai/gpt-4o-mini'); ?>>
+                                GPT-4o Mini (اقتصادی - پیشنهادی) ⭐
+                            </option>
+                            <option value="anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'anthropic/claude-3-haiku'); ?>>
+                                Claude 3 Haiku (سریع و اقتصادی)
+                            </option>
+                            <option value="google/gemini-flash-1.5" <?php selected($settings['claude_model'], 'google/gemini-flash-1.5'); ?>>
+                                Gemini Flash 1.5 (سریع)
+                            </option>
+                        </optgroup>
+                        <optgroup label="قدرتمند و پریمیوم">
+                            <option value="openai/gpt-4o" <?php selected($settings['claude_model'], 'openai/gpt-4o'); ?>>
+                                GPT-4o (قدرتمند)
+                            </option>
+                            <option value="anthropic/claude-3-5-sonnet" <?php selected($settings['claude_model'], 'anthropic/claude-3-5-sonnet'); ?>>
+                                Claude 3.5 Sonnet
+                            </option>
+                            <option value="anthropic/claude-sonnet-4" <?php selected($settings['claude_model'], 'anthropic/claude-sonnet-4'); ?>>
+                                Claude Sonnet 4
+                            </option>
+                            <option value="google/gemini-pro-1.5" <?php selected($settings['claude_model'], 'google/gemini-pro-1.5'); ?>>
+                                Gemini Pro 1.5
+                            </option>
+                            <option value="mistralai/mistral-large" <?php selected($settings['claude_model'], 'mistralai/mistral-large'); ?>>
+                                Mistral Large
+                            </option>
+                        </optgroup>
+                        <optgroup label="رایگان (آزمایشی)">
+                            <option value="meta-llama/llama-4-maverick:free" <?php selected($settings['claude_model'], 'meta-llama/llama-4-maverick:free'); ?>>
+                                Llama 4 Maverick (رایگان)
+                            </option>
+                        </optgroup>
+                        <optgroup label="مدل‌های قدیمی">
+                            <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
+                                Claude Sonnet 4 (قدیمی)
+                            </option>
+                            <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
+                                Claude 3.5 Sonnet (قدیمی)
+                            </option>
+                            <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
+                                GPT-4o (قدیمی - بدون پیشوند)
+                            </option>
+                            <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
+                                GPT-4o Mini (قدیمی - بدون پیشوند)
+                            </option>
+                        </optgroup>
                     </select>
-                    <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>
+                    <span class="sir-help">مدل پیش‌فرض برای تولید محتوا - GPT-4o Mini پیشنهاد می‌شود</span>
+                </div>
+                
+                <div class="sir-form-row">
+                    <button type="button" class="button sir-test-api" data-api="blackbox" style="margin-top: 10px;">
+                        🧪 تست مدل انتخاب شده
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Color Settings -->
+            <div class="sir-settings-section">
+                <h2>🎨 تنظیمات رنگ و ظاهر</h2>
+                
+                <div class="sir-form-row">
+                    <label for="primary_color">رنگ اصلی برند</label>
+                    <div class="sir-input-group">
+                        <input type="color" 
+                               id="primary_color" 
+                               name="primary_color" 
+                               value="<?php echo esc_attr($settings['primary_color']); ?>"
+                               style="width: 80px; height: 40px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" 
+                               id="primary_color_hex" 
+                               value="<?php echo esc_attr($settings['primary_color']); ?>"
+                               placeholder="#e91e63"
+                               style="width: 120px; margin-right: 10px;">
+                    </div>
+                    <span class="sir-help">
+                        این رنگ برای گرادیانها و هایلایت‌های محتوای تولید شده استفاده می‌شود
+                    </span>
+                </div>
+                
+                <div class="sir-form-row">
+                    <label>
+                        <input type="checkbox" 
+                               name="use_theme_color" 
+                               value="yes" 
+                               <?php checked($settings['use_theme_color'], 'yes'); ?>>
+                        استفاده خودکار از رنگ اصلی قالب (Primary Color)
+                    </label>
+                    <span class="sir-help">
+                        در صورت فعال بودن، رنگ اصلی قالب وردپرس به جای رنگ دستی استفاده می‌شود
+                    </span>
                 </div>
             </div>
             
@@ -156,3 +236,19 @@ $settings = [
         </form>
     </div>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    // Sync color picker with hex input
+    $('#primary_color').on('change', function() {
+        $('#primary_color_hex').val($(this).val());
+    });
+    
+    $('#primary_color_hex').on('change keyup', function() {
+        var hex = $(this).val();
+        if (/^#[0-9A-F]{6}$/i.test(hex)) {
+            $('#primary_color').val(hex);
+        }
+    });
+});
+</script>
