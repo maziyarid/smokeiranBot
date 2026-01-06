@@ -172,14 +172,19 @@ class SIR_Content_Parser {
     }
     
     /**
-     * Build full content (excluding JSON)
+     * Build full content (excluding JSON and meta sections)
      */
     private function build_full_content($content) {
         // Remove JSON block
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
-        // Remove meta section (first section)
-        $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
+        // Try to extract section 4 onwards (HTML content section)
+        if (preg_match('/##?\s*بخش\s*[۴4].*?\n+([\s\S]+)/u', $content, $match)) {
+            return trim($match[1]);
+        }
+        
+        // Fallback: Remove first 3 meta sections
+        $content = preg_replace('/^##?\s*بخش\s*[۱۲۳123].*?\n+.*?(?=\n##?\s*بخش\s*[۴4]|\z)/ums', '', $content);
         
         return trim($content);
     }
@@ -188,19 +193,43 @@ class SIR_Content_Parser {
      * Extract SEO meta from content
      */
     private function extract_seo_meta($content, &$parsed) {
-        // H1 Title
+        // H1 Title - try multiple patterns
         if (empty($parsed['h1_title'])) {
-            if (preg_match('/عنوان صفحه \(H1\):\s*(.+)/u', $content, $match)) {
+            // Pattern 1: بخش ۱: عنوان محصول
+            if (preg_match('/##?\s*بخش\s*۱.*?\n+(.+?)(?:\n|$)/u', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
-            } elseif (preg_match('/^# (.+)$/m', $content, $match)) {
+            }
+            // Pattern 2: عنوان صفحه (H1):
+            elseif (preg_match('/عنوان صفحه\s*\(H1\):\s*(.+)/u', $content, $match)) {
+                $parsed['h1_title'] = trim($match[1]);
+            }
+            // Pattern 3: Simple # heading
+            elseif (preg_match('/^#\s+(.+)$/m', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
             }
         }
         
-        // Slug
+        // Slug - try multiple patterns
         if (empty($parsed['slug'])) {
-            if (preg_match('/پیوند یکتا.*?:\s*([a-z0-9\-]+)/ui', $content, $match)) {
+            // Pattern 1: بخش ۲: پیوند یکتا
+            if (preg_match('/##?\s*بخش\s*۲.*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
                 $parsed['slug'] = strtolower(trim($match[1]));
+            }
+            // Pattern 2: پیوند یکتا: or Slug:
+            elseif (preg_match('/(?:پیوند یکتا|Slug).*?:\s*([a-z0-9\-]+)/ui', $content, $match)) {
+                $parsed['slug'] = strtolower(trim($match[1]));
+            }
+        }
+        
+        // Short Description - try multiple patterns
+        if (empty($parsed['short_description'])) {
+            // Pattern 1: بخش ۳: توضیح کوتاه
+            if (preg_match('/##?\s*بخش\s*۳.*?\n+(.+?)(?=\n##|\n---|\z)/us', $content, $match)) {
+                $parsed['short_description'] = trim($match[1]);
+            }
+            // Pattern 2: توضیح کوتاه:
+            elseif (preg_match('/توضیح کوتاه.*?:\s*\n*(.+?)(?=\n##|\n---|\z)/us', $content, $match)) {
+                $parsed['short_description'] = trim($match[1]);
             }
         }
         
@@ -215,13 +244,6 @@ class SIR_Content_Parser {
         if (empty($parsed['meta_description'])) {
             if (preg_match('/متا دسکریپشن:\s*(.+)/u', $content, $match)) {
                 $parsed['meta_description'] = trim($match[1]);
-            }
-        }
-        
-        // Short Description
-        if (empty($parsed['short_description'])) {
-            if (preg_match('/### بخش ۲:.*?\n\n(.+?)(?=\n\n|###)/us', $content, $match)) {
-                $parsed['short_description'] = trim($match[1]);
             }
         }
     }

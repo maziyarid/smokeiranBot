@@ -84,7 +84,7 @@ class SIR_Blackbox_API {
     /**
      * Generate content using Blackbox API
      */
-    public function generate($prompt, $user_message, $max_tokens = 32000) {
+    public function generate($prompt, $user_message, $max_tokens = 50000) {
         if (empty($this->api_key)) {
             throw new Exception('کلید API بلک‌باکس تنظیم نشده است.');
         }
@@ -100,8 +100,8 @@ class SIR_Blackbox_API {
         $full_message .= "\n\nرنگ اصلی برند: " . $primary_color;
         $full_message .= "\nاز این رنگ برای گرادیانها و هایلایتها استفاده کن.";
         
-        // Add instruction for complete output
-        $full_message .= "\n\n⚠️ مهم: تمام ۱۸ بخش را به طور کامل بنویس. محتوا را ناتمام رها نکن.";
+        // Add strong instruction for complete output
+        $full_message .= "\n\n⚠️⚠️⚠️ بسیار مهم: تمام بخش‌ها را کامل بنویس. اگر به حد توکن نزدیک شدی، خلاصه‌تر بنویس ولی همه بخش‌ها را کامل کن. محتوا را نیمه‌کاره رها نکن.";
         
         // Log request
         $this->log_api_request($full_message, $max_tokens);
