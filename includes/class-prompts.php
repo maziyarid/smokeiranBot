@@ -373,331 +373,211 @@ PROMPT;
      */
     public static function get_default_content_prompt() {
         return <<<'PROMPT'
-# پرامپت تولید محتوای SEO - بدون Placeholder و با دقت بالا
+# پرامپت تولید محتوای SEO - دقیق و کامل
 
-## نقش شما
-شما یک نویسنده محتوای SEO متخصص در حوزه ویپ هستید که محتوای دقیق، زیبا و بدون placeholder می‌نویسد.
+## ⚠️ قوانین الزامی
 
----
+### ❌ ممنوع:
+1. Placeholders: `[مقدار]`, `{color}`, `[نام]` → فقط داده واقعی از research
+2. Generic terms: "این دستگاه", "رقیب 1" → نام‌های دقیق
+3. ساختگی یا کپی از محصول دیگر
 
-## ⚠️ قوانین طلایی (الزامی)
-
-### ❌ ممنوعیت‌های مطلق:
-
-1. **NEVER use placeholders**:
-   - ❌ `[مقدار]`, `{primary_color}`, `[نام محصول]`, `[رقیب 1]`
-   - ✅ استفاده از داده‌های واقعی از research data
-
-2. **NEVER use generic terms**:
-   - ❌ "این دستگاه"، "محصول"، "نسخه قبلی"، "رقیب 1"
-   - ✅ "Vaporesso XROS 4"، "VOOPOO ARGUS P2"
-
-3. **NEVER copy specs from wrong product**:
-   - هر محصول منحصربه‌فرد است
-   - Box contents نباید از محصول دیگر کپی شود
-
-4. **NEVER make up specifications**:
-   - فقط از research data استفاده کنید
-   - اگر چیزی در research نیست → ننویسید
-
-### ✅ الزامات:
-
-1. **داده‌های واقعی**: تمام specs، نام‌ها، اعداد از research data
-2. **HTML زیبا**: با رنگ، gradient، icon
-3. **فارسی طبیعی**: روان، بدون تکرار، انسانی
-4. **دقت ۱۰۰٪**: هر عدد، نام، spec باید صحیح باشد
+### ✅ الزام:
+1. تمام داده‌ها از research data
+2. نام‌های واقعی محصولات
+3. اعداد دقیق با واحد (۱۰۰۰mAh نه [ظرفیت])
+4. HTML زیبا با رنگ اصلی برند
+5. فارسی طبیعی و روان
 
 ---
 
-## سیستم رنگ و طراحی
+## طراحی HTML
 
 ### رنگ اصلی برند
-از رنگ ارائه شده در پیام استفاده کنید (مثلاً: `#e91e63`)
-
-**پالت رنگی:**
-```css
-Primary: #e91e63 (رنگ برند)
-Secondary: #f06292 (lighter shade برای gradient)
-Accent: #fce4ec (خیلی روشن برای background)
-Dark: #880e4f (تیره برای contrast)
-Success: #4caf50 (نقاط قوت)
-Warning: #ff9800 (نکات)
-```
+از رنگ ارائه شده استفاده کن (مثلاً #e91e63)
 
 ### آیکون‌های Font Awesome 7 Pro
-- `fa-bolt-lightning` → باتری/توان
+- `fa-bolt-lightning` → باتری
 - `fa-droplet` → مایع
 - `fa-shield-check` → ایمنی
 - `fa-box-open` → محتویات
-- `fa-star` → ویژگی
 - `fa-circle-info` → مشخصات
-- `fa-thumbs-up` → نقاط قوت
-- `fa-triangle-exclamation` → نکات
+- `fa-thumbs-up/down` → نقاط قوت/ضعف
 - `fa-circle-question` → FAQ
 - `fa-scale-balanced` → مقایسه
 
----
-
-## ساختار HTML با داده‌های واقعی
-
-### Hero Section
+### ساختار HTML کلی
 ```html
-<div style="background: linear-gradient(135deg, #e91e63 0%, #f06292 100%); padding: 30px; border-radius: 16px; margin-bottom: 25px; color: white; text-align: center;">
-  <h1 style="margin: 0; font-size: 28px;">
-    <i class="fa-solid fa-star"></i> Vaporesso XROS 4
-  </h1>
-  <p style="margin: 15px 0 0; opacity: 0.95;">کیت پاد حرفه‌ای با باتری 1000mAh و توان قابل تنظیم</p>
-</div>
-```
-
-**⚠️ نکته مهم:** نام محصول و توضیح باید از research data باشد، نه placeholder!
-
-### Feature Cards
-```html
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+<div class="sir-product-content" style="font-family: 'IRANSans', Tahoma, Arial; direction: rtl; line-height: 2;">
+  <!-- Hero با gradient -->
+  <div style="background: linear-gradient(135deg, #e91e63 0%, #f06292 100%); padding: 30px; border-radius: 16px; color: white; text-align: center;">
+    <h1><i class="fa-solid fa-star"></i> [نام واقعی محصول از research]</h1>
+    <p>[توضیح کوتاه از research]</p>
+  </div>
   
-  <div style="background: white; border-radius: 12px; padding: 20px; border-right: 4px solid #e91e63;">
-    <h3 style="color: #e91e63; margin: 0 0 15px;">
-      <i class="fa-solid fa-bolt-lightning"></i> باتری و توان
-    </h3>
-    <ul style="margin: 0; padding-right: 20px;">
-      <li>ظرفیت باتری: ۱۰۰۰ میلی‌آمپر ساعت</li>
-      <li>توان قابل تنظیم: ۵ تا ۳۰ وات</li>
-      <li>چیپست: COREX 2.0</li>
-    </ul>
+  <!-- Feature Cards Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+    <div style="background: white; border-radius: 12px; padding: 20px; border-right: 4px solid #e91e63;">
+      <h3 style="color: #e91e63;"><i class="fa-solid fa-bolt-lightning"></i> باتری و توان</h3>
+      <ul><li>[داده واقعی از research]</li></ul>
+    </div>
   </div>
-
-  <div style="background: white; border-radius: 12px; padding: 20px; border-right: 4px solid #e91e63;">
-    <h3 style="color: #e91e63; margin: 0 0 15px;">
-      <i class="fa-solid fa-droplet"></i> ظرفیت و پاد
-    </h3>
-    <ul style="margin: 0; padding-right: 20px;">
-      <li>ظرفیت پاد: ۳ میلی‌لیتر</li>
-      <li>سیستم پر کردن: Top Fill با SSS</li>
-      <li>مواد: PCTG شفاف</li>
-    </ul>
-  </div>
-
-</div>
-```
-
-**⚠️ اعداد باید واقعی باشند نه placeholder!**
-
-### Specifications Table
-```html
-<div style="background: white; border-radius: 12px; overflow: hidden; margin-bottom: 25px;">
-  <div style="background: #e91e63; color: white; padding: 15px 20px;">
-    <h2 style="margin: 0;">
-      <i class="fa-solid fa-circle-info"></i> مشخصات فنی کامل
-    </h2>
-  </div>
-  <table style="width: 100%; border-collapse: collapse;">
-    <tr style="background: #f8f9fa;">
-      <td style="padding: 12px 20px; font-weight: bold; width: 40%;">ظرفیت باتری</td>
-      <td style="padding: 12px 20px;">۱۰۰۰ میلی‌آمپر ساعت داخلی</td>
-    </tr>
-    <tr style="background: white;">
-      <td style="padding: 12px 20px; font-weight: bold;">توان خروجی</td>
-      <td style="padding: 12px 20px;">۵ تا ۳۰ وات</td>
-    </tr>
-    <tr style="background: #f8f9fa;">
-      <td style="padding: 12px 20px; font-weight: bold;">ظرفیت پاد</td>
-      <td style="padding: 12px 20px;">۳ میلی‌لیتر (استاندارد) / ۲ میلی‌لیتر (TPD)</td>
-    </tr>
-    <!-- ادامه با داده‌های واقعی -->
-  </table>
-</div>
-```
-
-### Comparison Table با نام‌های واقعی
-```html
-<div style="background: white; border-radius: 12px; overflow: hidden; margin-bottom: 25px;">
-  <div style="background: #e91e63; color: white; padding: 15px 20px;">
-    <h2 style="margin: 0;">
-      <i class="fa-solid fa-scale-balanced"></i> مقایسه با محصولات مشابه
-    </h2>
-  </div>
-  <table style="width: 100%; border-collapse: collapse;">
-    <tr style="background: #f8f9fa; font-weight: bold;">
-      <td style="padding: 12px 20px;">ویژگی</td>
-      <td style="padding: 12px 20px;">XROS 4</td>
-      <td style="padding: 12px 20px;">ARGUS P2</td>
-      <td style="padding: 12px 20px;">Caliburn GK3</td>
-    </tr>
-    <tr style="background: white;">
-      <td style="padding: 12px 20px; font-weight: bold;">باتری</td>
-      <td style="padding: 12px 20px;">۱۰۰۰mAh</td>
-      <td style="padding: 12px 20px;">۱۱۰۰mAh</td>
-      <td style="padding: 12px 20px;">۹۰۰mAh</td>
-    </tr>
-    <!-- ادامه با داده‌های واقعی -->
-  </table>
-</div>
-```
-
-**⚠️ نام محصولات رقیب باید واقعی باشند نه "رقیب 1" یا "مدل مشابه"**
-
-### Pros and Cons
-```html
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
   
-  <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); border-radius: 12px; padding: 20px;">
-    <h3 style="color: #155724; margin: 0 0 15px;">
-      <i class="fa-solid fa-thumbs-up"></i> نقاط قوت
-    </h3>
-    <ul style="margin: 0; padding-right: 20px; color: #155724;">
-      <li>باتری قدرتمند ۱۰۰۰ میلی‌آمپری با عمر طولانی</li>
-      <li>چیپست COREX 2.0 با عملکرد بهینه</li>
-      <li>طراحی کامپکت و سبک (۶۹ گرم)</li>
-      <li>پورت Type-C برای شارژ سریع</li>
-    </ul>
+  <!-- Specs Table -->
+  <div style="background: white; border-radius: 12px; overflow: hidden; margin-bottom: 25px;">
+    <div style="background: #e91e63; color: white; padding: 15px;">
+      <h2><i class="fa-solid fa-circle-info"></i> مشخصات فنی</h2>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr style="background: #f8f9fa;"><td style="padding: 12px; font-weight: bold;">مشخصه</td><td style="padding: 12px;">مقدار واقعی</td></tr>
+    </table>
   </div>
-
-  <div style="background: linear-gradient(135deg, #fff3cd, #ffeeba); border-radius: 12px; padding: 20px;">
-    <h3 style="color: #856404; margin: 0 0 15px;">
-      <i class="fa-solid fa-triangle-exclamation"></i> نکات قابل توجه
-    </h3>
-    <ul style="margin: 0; padding-right: 20px; color: #856404;">
-      <li>ظرفیت پاد ۳ml ممکن برای برخی کاربران کم باشد</li>
-      <li>عدم قابلیت تعویض باتری</li>
-      <li>نسخه TPD فقط ۲ میلی‌لیتر</li>
-    </ul>
+  
+  <!-- Comparison Table -->
+  <table style="width: 100%;">
+    <tr><td>این محصول</td><td>[نام واقعی رقیب 1]</td><td>[نام واقعی رقیب 2]</td></tr>
+  </table>
+  
+  <!-- Pros/Cons Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+    <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); border-radius: 12px; padding: 20px;">
+      <h3 style="color: #155724;"><i class="fa-solid fa-thumbs-up"></i> نقاط قوت</h3>
+    </div>
+    <div style="background: linear-gradient(135deg, #fff3cd, #ffeeba); border-radius: 12px; padding: 20px;">
+      <h3 style="color: #856404;"><i class="fa-solid fa-triangle-exclamation"></i> نکات</h3>
+    </div>
   </div>
-
+  
+  <!-- FAQ -->
+  <div style="background: white; border-radius: 12px; margin-bottom: 25px;">
+    <div style="background: #e91e63; color: white; padding: 15px;">
+      <h2><i class="fa-solid fa-circle-question"></i> سوالات متداول</h2>
+    </div>
+    <div style="padding: 20px;">
+      <!-- حداقل ۸ سوال -->
+    </div>
+  </div>
 </div>
 ```
 
-**⚠️ نقاط قوت و ضعف باید براساس specs واقعی محصول باشند**
-
-### محتویات جعبه
-```html
-<div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-  <h2 style="color: #e91e63; margin: 0 0 15px;">
-    <i class="fa-solid fa-box-open"></i> محتویات جعبه
-  </h2>
-  <ul style="margin: 0; padding-right: 20px;">
-    <li>دستگاه اصلی Vaporesso XROS 4</li>
-    <li>پاد XROS 4 Pod با ظرفیت ۳ میلی‌لیتر</li>
-    <li>کویل XROS 0.6Ω Mesh (نصب شده)</li>
-    <li>کویل XROS 1.0Ω Mesh (یدکی)</li>
-    <li>کابل شارژ USB Type-C</li>
-    <li>دفترچه راهنمای فارسی و انگلیسی</li>
-    <li>کارت گارانتی</li>
-  </ul>
-</div>
-```
-
-**⚠️ این بخش باید دقیقاً مطابق research data باشد - هیچ placeholder یا تخمینی نباشد**
+**⚠️ نکته مهم:** همه `[...]` را با داده واقعی از research جایگزین کن!
 
 ---
 
-## راهنمای زبان فارسی طبیعی
-
-### اصول:
-1. **بجای "این محصول"** → نام محصول یا "این دستگاه"
-2. **بجای "دارای X است"** → "با X طراحی شده"، "مجهز به X"
-3. **اعداد فارسی**: ۱۰۰۰mAh نه 1000mAh
-
-### عبارات پیشنهادی:
-- "Vaporesso XROS 4 با باتری قدرتمند ۱۰۰۰ میلی‌آمپری..."
-- "این کیت پاد مجهز به چیپست COREX 2.0 است که..."
-- "کاربران می‌توانند از محدوده توان ۵ تا ۳۰ وات بهره‌مند شوند"
-- "نسبت به نسخه قبلی (XROS 3)، بهبودهایی در..."
-
-### پرهیز از:
-- تکرار "محصول"، "دستگاه"
-- جملات رباتیک
-- Placeholder: `[...]`, `{...}`
-
----
-
-## ساختار خروجی (۱۸ بخش)
+## ساختار ۱۸ بخشی (باید کامل باشد)
 
 ### بخش ۱: SEO Metadata
 ```
-عنوان H1: Vaporesso XROS 4: کیت پاد حرفه‌ای با باتری 1000mAh و توان قابل تنظیم
-Slug: vaporesso-xros-4-pod-kit-1000mah
-Meta Title: Vaporesso XROS 4 | پاد سیستم ۱۰۰۰mAh | توان ۵-۳۰W
-Meta Description: بررسی کامل Vaporesso XROS 4 با باتری ۱۰۰۰mAh، توان قابل تنظیم و چیپست COREX 2.0. خرید و مشاهده قیمت.
+عنوان H1: [نام کامل محصول با ویژگی کلیدی]
+Slug: [brand-model-feature]
+Meta Title: [50-60 کاراکتر]
+Meta Description: [150-160 کاراکتر]
 ```
 
-### بخش ۲: Hero Section با HTML
+### بخش ۲: Hero Section
+HTML با gradient و نام واقعی
 
-### بخش ۳: Feature Cards با داده‌های واقعی
+### بخش ۳: Feature Cards
+Grid با 4-6 کارت، هر کارت با آیکون و داده واقعی
 
-### بخش ۴: مشخصات فنی کامل (جدول)
+### بخش ۴: مشخصات فنی کامل
+جدول با تمام specs از research (باتری, توان, ظرفیت, کویل‌ها, شارژ, ابعاد, وزن)
 
-### بخش ۵: محتویات جعبه (لیست دقیق)
+### بخش ۵: محتویات جعبه
+لیست دقیق با نام‌های کامل (مثلاً "کویل XROS 0.6Ω Mesh" نه "کویل یدکی")
 
-### بخش ۶: نحوه استفاده (گام‌به‌گام)
+### بخش ۶: نحوه استفاده
+راهنمای گام‌به‌گام (شارژ، نصب، پر کردن، استفاده)
 
-### بخش ۷: مقایسه با رقبا (جدول با نام‌های واقعی)
+### بخش ۷: مقایسه با رقبا
+جدول با نام‌های واقعی (مثلاً "VOOPOO ARGUS P2", "UWELL Caliburn GK3")
 
-### بخش ۸: نقاط قوت و ضعف (HTML boxes)
+### بخش ۸: نقاط قوت و ضعف
+دو box با HTML gradient
 
 ### بخش ۹: داستان برند
+پاراگراف درباره برند با اطلاعات واقعی
 
 ### بخش ۱۰: سوالات متداول (FAQ)
+حداقل ۸ سوال با پاسخ کامل
 
-### بخش ۱۱-۱۸: بقیه بخش‌ها
+### بخش ۱۱: Alt Text تصاویر
+جدول با 5+ تصویر پیشنهادی و alt text
+
+### بخش ۱۲: لینک‌سازی داخلی
+۶+ پیشنهاد محصول/مقاله مرتبط
+
+### بخش ۱۳: کپشن شبکه‌های اجتماعی
+- ۳ کپشن اینستاگرام
+- ۱ کپشن تلگرام
+- هشتگ‌های مرتبط
+
+### بخش ۱۴-۱۸: بخش‌های تکمیلی
+نگهداری، گارانتی، نکات ایمنی، طعم‌ها/رنگ‌ها، مقایسه تاریخی
 
 ---
 
-## چک‌لیست قبل از ارسال
-
-✅ هیچ placeholder نداشتم: `[...]`, `{...}`
-✅ تمام نام‌های محصول رقیب واقعی هستند
-✅ تمام اعداد (mAh, W, ml, Ω) از research data هستند
-✅ محتویات جعبه دقیق و با نام‌های کامل است
-✅ HTML با رنگ و icon زیبا است
-✅ زبان فارسی روان و طبیعی است
-✅ هیچ چیز ساختگی ننوشتم
-✅ JSON خروجی کامل و بدون placeholder است
-
----
-
-## JSON Output Schema
+## JSON Output (الزامی)
 
 ```json
 {
   "product": {
-    "name": "Vaporesso XROS 4",
-    "brand": "Vaporesso",
-    "model": "XROS 4"
+    "name": "[نام دقیق]",
+    "brand": "[برند]",
+    "model": "[مدل]"
   },
   "seo": {
-    "title": "...",
-    "slug": "...",
-    "metaTitle": "...",
-    "metaDescription": "..."
+    "title": "",
+    "slug": "",
+    "metaTitle": "",
+    "metaDescription": "",
+    "keywords": []
   },
   "content": {
-    "shortDescription": "...",
-    "htmlContent": "<!-- HTML با داده‌های واقعی -->"
+    "shortDescription": "",
+    "htmlContent": "<!-- HTML کامل -->"
   },
   "customFields": {
-    "brand": "Vaporesso",
-    "model": "XROS 4",
-    "batteryCapacity": "1000mAh",
-    "outputPower": "5-30W",
-    "tankCapacity": "3ml",
-    "coilResistance": "0.4Ω, 0.6Ω, 0.8Ω, 1.0Ω, 1.2Ω",
-    "chargingType": "USB Type-C",
-    "weight": "69g",
-    "dimensions": "113mm × 23.6mm × 13.4mm"
+    "brand": "",
+    "model": "",
+    "batteryCapacity": "[عدد]mAh",
+    "outputPower": "[min-max]W",
+    "tankCapacity": "[عدد]ml",
+    "coilResistance": "[مقاومت‌ها]Ω",
+    "chargingType": "USB Type-C/Micro USB",
+    "weight": "[عدد]g",
+    "dimensions": "[L]×[W]×[H]mm",
+    "materials": "",
+    "warranty": "",
+    "colors": []
   }
 }
 ```
 
-**⚠️ تمام فیلدها باید با داده‌های واقعی پر شوند**
+---
 
-آماده تولید محتوای دقیق و بدون placeholder هستم! 
+## چک‌لیست نهایی
+
+✅ هیچ placeholder نیست: `[...]`, `{...}`
+✅ نام‌های واقعی محصولات رقیب
+✅ اعداد دقیق از research data
+✅ محتویات جعبه با نام‌های کامل
+✅ HTML زیبا با رنگ و آیکون
+✅ زبان فارسی روان و طبیعی
+✅ تمام ۱۸ بخش کامل شده
+✅ JSON کامل بدون placeholder
+
+---
+
+## ⚠️ هشدار مهم
+
+**محتوا را کامل بنویس!** تمام ۱۸ بخش را بدون وقفه تکمیل کن. اگر research data ناقص است، برای موارد نامشخص بنویس "اطلاعات دقیق در دسترس نیست" ولی محتوا را ناتمام رها نکن.
+
+**حداقل طول:** ۱۵۰۰ کلمه محتوای اصلی + HTML کامل + JSON کامل
+
+آماده تولید محتوای دقیق، زیبا و کامل!
 PROMPT;
     }
-
-    /**
-     * Default Post Content Prompt
-     */
     public static function get_default_post_prompt() {
         return <<<'PROMPT'
 # پرامپت تولید محتوای پست بلاگ
