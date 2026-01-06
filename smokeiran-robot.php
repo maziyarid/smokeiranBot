@@ -40,6 +40,60 @@ define('SIR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 require_once SIR_PLUGIN_DIR . 'includes/class-prompts.php';
 
 /**
+ * Migrate invalid model names to correct format
+ */
+function sir_migrate_model_names() {
+    $current_model = get_option('sir_claude_model', '');
+    
+    // Invalid models that need migration
+    $invalid_models = [
+        'blackboxai', 'blackboxai-pro', 
+        'claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022',
+        'gpt-4o', 'gpt-4-turbo', 'gpt-4', 
+        'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku',
+        'gemini-1.5-pro', 'gpt-3.5-turbo', 'gpt-4o-mini',
+        'blackboxai/anthropic/claude-3.5-sonnet',
+        'blackboxai/anthropic/claude-3-sonnet',
+        'blackboxai/openai/gpt-4o',
+        'blackboxai/openai/gpt-4-turbo',
+        'blackboxai/google/gemini-1.5-pro',
+        'blackboxai/openai/gpt-3.5-turbo'
+    ];
+    
+    // Model migration map - map to valid documented models
+    $migration_map = [
+        'claude-sonnet-4-20250514' => 'blackboxai/anthropic/claude-3-opus',
+        'claude-3-5-sonnet-20241022' => 'blackboxai/anthropic/claude-3-opus',
+        'blackboxai/anthropic/claude-3.5-sonnet' => 'blackboxai/anthropic/claude-3-opus',
+        'blackboxai/anthropic/claude-3-sonnet' => 'blackboxai/anthropic/claude-3-opus',
+        'claude-3-opus' => 'blackboxai/anthropic/claude-3-opus',
+        'claude-3-sonnet' => 'blackboxai/anthropic/claude-3-opus',
+        'claude-3-haiku' => 'blackboxai/anthropic/claude-3-haiku',
+        'gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
+        'blackboxai/openai/gpt-4o' => 'blackboxai/amazon/nova-pro-v1',
+        'gpt-4-turbo' => 'blackboxai/amazon/nova-pro-v1',
+        'blackboxai/openai/gpt-4-turbo' => 'blackboxai/amazon/nova-pro-v1',
+        'gpt-4' => 'blackboxai/amazon/nova-pro-v1',
+        'gemini-1.5-pro' => 'blackboxai/google/gemini-2.0-flash-exp:free',
+        'blackboxai/google/gemini-1.5-pro' => 'blackboxai/google/gemini-2.0-flash-exp:free',
+        'gpt-3.5-turbo' => 'blackboxai/amazon/nova-lite-v1',
+        'blackboxai/openai/gpt-3.5-turbo' => 'blackboxai/amazon/nova-lite-v1',
+        'gpt-4o-mini' => 'blackboxai/amazon/nova-lite-v1',
+        'blackboxai' => 'blackboxai/x-ai/grok-code-fast-1:free',
+        'blackboxai-pro' => 'blackboxai/anthropic/claude-3-opus',
+    ];
+    
+    // Check if migration is needed
+    if (in_array($current_model, $invalid_models)) {
+        $new_model = isset($migration_map[$current_model]) 
+            ? $migration_map[$current_model] 
+            : 'blackboxai/x-ai/grok-code-fast-1:free';
+        
+        update_option('sir_claude_model', $new_model);
+    }
+}
+
+/**
  * Main Plugin Class
  */
 final class SmokeIran_Robot {
@@ -77,6 +131,7 @@ final class SmokeIran_Robot {
     
     private function init_hooks() {
         add_action('plugins_loaded', [$this, 'load_textdomain']);
+        add_action('plugins_loaded', 'sir_migrate_model_names', 5);
         add_action('admin_init', [$this, 'check_requirements']);
         
         if (is_admin()) {
@@ -119,7 +174,7 @@ register_activation_hook(__FILE__, function() {
     $defaults = [
         'sir_blackbox_api_key' => '',
         'sir_tavily_api_key' => '',
-        'sir_claude_model' => 'claude-sonnet-4-20250514',
+        'sir_claude_model' => 'blackboxai/x-ai/grok-code-fast-1:free',
         'sir_auto_publish' => 'draft',
         'sir_enable_logging' => 'yes',
     ];
@@ -129,6 +184,9 @@ register_activation_hook(__FILE__, function() {
             add_option($key, $value);
         }
     }
+    
+    // Run model migration for existing installations
+    sir_migrate_model_names();
     
     // Initialize default prompts (class required above for activation compatibility)
     if (class_exists('SIR_Prompts')) {

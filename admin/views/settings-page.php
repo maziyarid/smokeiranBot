@@ -1,10 +1,10 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$settings = [
+    $settings = [
     'blackbox_api_key' => get_option('sir_blackbox_api_key', ''),
     'tavily_api_key' => get_option('sir_tavily_api_key', ''),
-    'claude_model' => get_option('sir_claude_model', 'claude-sonnet-4-20250514'),
+    'claude_model' => get_option('sir_claude_model', 'blackboxai/anthropic/claude-3-haiku'),
     'auto_publish' => get_option('sir_auto_publish', 'draft'),
     'enable_logging' => get_option('sir_enable_logging', 'yes'),
 ];
@@ -60,19 +60,28 @@ $settings = [
                 <h2>🤖 تنظیمات مدل</h2>
                 
                 <div class="sir-form-row">
-                    <label for="claude_model">مدل Claude</label>
+                    <label for="claude_model">مدل هوش مصنوعی</label>
                     <select id="claude_model" name="claude_model">
-                        <option value="claude-sonnet-4-20250514" <?php selected($settings['claude_model'], 'claude-sonnet-4-20250514'); ?>>
-                            Claude Sonnet 4 (پیشنهادی - بهترین نسبت کیفیت/قیمت)
+                        <option value="blackboxai/x-ai/grok-code-fast-1:free" <?php selected($settings['claude_model'], 'blackboxai/x-ai/grok-code-fast-1:free'); ?>>
+                            Grok Code Fast (رایگان - پیشنهادی)
                         </option>
-                        <option value="claude-3-5-sonnet-20241022" <?php selected($settings['claude_model'], 'claude-3-5-sonnet-20241022'); ?>>
-                            Claude 3.5 Sonnet
+                        <option value="blackboxai/anthropic/claude-3-haiku" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-haiku'); ?>>
+                            Claude 3 Haiku (سریع و ارزان)
                         </option>
-                        <option value="gpt-4o" <?php selected($settings['claude_model'], 'gpt-4o'); ?>>
-                            GPT-4o (OpenAI)
+                        <option value="blackboxai/anthropic/claude-3-opus" <?php selected($settings['claude_model'], 'blackboxai/anthropic/claude-3-opus'); ?>>
+                            Claude 3 Opus (بهترین کیفیت)
                         </option>
-                        <option value="gpt-4o-mini" <?php selected($settings['claude_model'], 'gpt-4o-mini'); ?>>
-                            GPT-4o Mini (اقتصادی)
+                        <option value="blackboxai/amazon/nova-lite-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-lite-v1'); ?>>
+                            Amazon Nova Lite (ارزان)
+                        </option>
+                        <option value="blackboxai/amazon/nova-pro-v1" <?php selected($settings['claude_model'], 'blackboxai/amazon/nova-pro-v1'); ?>>
+                            Amazon Nova Pro (قدرتمند)
+                        </option>
+                        <option value="blackboxai/google/gemini-2.0-flash-exp:free" <?php selected($settings['claude_model'], 'blackboxai/google/gemini-2.0-flash-exp:free'); ?>>
+                            Gemini 2.0 Flash (رایگان - سریع)
+                        </option>
+                        <option value="blackboxai/agentica-org/deepcoder-14b-preview:free" <?php selected($settings['claude_model'], 'blackboxai/agentica-org/deepcoder-14b-preview:free'); ?>>
+                            Deepcoder 14B (رایگان - برنامه‌نویسی)
                         </option>
                     </select>
                     <span class="sir-help">مدل پیش‌فرض برای تولید محتوا</span>
