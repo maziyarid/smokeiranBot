@@ -43,15 +43,36 @@ class SIR_Product_Handler {
         if (empty($parsed['h1_title'])) {
             // Try to extract from content
             if (!empty($parsed['full_content'])) {
+                $parsed['h1_title'] = $this->extract_title_fallback($parsed['full_content']);
+            }
+            if (empty($parsed['h1_title'])) {
                 $parsed['h1_title'] = 'محصول جدید - ' . date('Y-m-d H:i:s');
-            } else {
-                throw new Exception('عنوان محصول یافت نشد و محتوای قابل تجزیه نیست.');
             }
         }
         
         // Ensure slug exists
         if (empty($parsed['slug'])) {
             $parsed['slug'] = sanitize_title($parsed['h1_title']) . '-' . time();
+        }
+        
+        // Ensure short description doesn't duplicate full content
+        if (!empty($parsed['short_description']) && !empty($parsed['full_content'])) {
+            // If short description is too long or looks like full content, truncate it
+            if (strlen($parsed['short_description']) > 500 || 
+                strpos($parsed['full_content'], $parsed['short_description']) === 0) {
+                // Extract first paragraph or truncate
+                $short = strip_tags($parsed['short_description']);
+                $short = mb_substr($short, 0, 300);
+                $parsed['short_description'] = $short . (strlen($short) < strlen($parsed['short_description']) ? '...' : '');
+            }
+        }
+        
+        // Clean full content - remove any meta section markers that leaked through
+        if (!empty($parsed['full_content'])) {
+            // Remove section markers at the start
+            $parsed['full_content'] = preg_replace('/^##?\s*بخش\s*[۱۲۳۴123456789][:\s].*?\n+/u', '', $parsed['full_content']);
+            // Remove "---" separator lines
+            $parsed['full_content'] = preg_replace('/^\s*-{3,}\s*$/m', '', $parsed['full_content']);
         }
         
         // Create product
@@ -243,5 +264,32 @@ class SIR_Product_Handler {
             'message' => $message,
             'created_at' => current_time('mysql')
         ]);
+    }
+    
+    /**
+     * Extract title as fallback from HTML content
+     */
+    private function extract_title_fallback($html_content) {
+        // Try to find first h1
+        if (preg_match('/<h1[^>]*>(.+?)<\/h1>/is', $html_content, $match)) {
+            $title = strip_tags($match[1]);
+            $title = html_entity_decode($title, ENT_QUOTES, 'UTF-8');
+            $title = trim($title);
+            if (strlen($title) > 5 && strlen($title) < 200) {
+                return $title;
+            }
+        }
+        
+        // Try first strong paragraph
+        if (preg_match('/<p[^>]*><strong>(.+?)<\/strong>/is', $html_content, $match)) {
+            $title = strip_tags($match[1]);
+            $title = html_entity_decode($title, ENT_QUOTES, 'UTF-8');
+            $title = trim($title);
+            if (strlen($title) > 5 && strlen($title) < 200) {
+                return $title;
+            }
+        }
+        
+        return '';
     }
 }

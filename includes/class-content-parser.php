@@ -179,11 +179,23 @@ class SIR_Content_Parser {
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
         // Try to extract section 4 onwards (HTML content section)
+        // Match from بخش ۴ to the end, but stop at بخش following sections that aren't part of HTML
+        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+([\s\S]+?)(?=\n##?\s*بخش\s*[۵۶۷۸۹5-9](?:[:\s]|$)|$)/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            
+            // Clean up malformed HTML - fix broken style attributes
+            $html_content = preg_replace('/;direction:\s*rtl;[^"]*?">/u', '; direction: rtl; text-align: right;">', $html_content);
+            $html_content = preg_replace('/(?<!")style="[^"]*$/m', '', $html_content); // Remove incomplete style attributes
+            
+            return $html_content;
+        }
+        
+        // Fallback: Extract everything after section 4 marker
         if (preg_match('/##?\s*بخش\s*[۴4].*?\n+([\s\S]+)/u', $content, $match)) {
             return trim($match[1]);
         }
         
-        // Fallback: Remove first 3 meta sections
+        // Last fallback: Remove first 3 meta sections
         $content = preg_replace('/^##?\s*بخش\s*[۱۲۳123].*?\n+.*?(?=\n##?\s*بخش\s*[۴4]|\z)/ums', '', $content);
         
         return trim($content);
@@ -195,16 +207,22 @@ class SIR_Content_Parser {
     private function extract_seo_meta($content, &$parsed) {
         // H1 Title - try multiple patterns
         if (empty($parsed['h1_title'])) {
-            // Pattern 1: بخش ۱: عنوان محصول
-            if (preg_match('/##?\s*بخش\s*۱.*?\n+(.+?)(?:\n|$)/u', $content, $match)) {
+            // Pattern 1: بخش ۱: عنوان محصول (H1) - capture title on same or next line
+            if (preg_match('/##?\s*بخش\s*[۱1][:\s].*?(?:عنوان|H1).*?\n+([^\n]+?)(?:\n|$)/u', $content, $match)) {
+                $title = trim($match[1]);
+                // Remove "---" separators if present
+                $title = preg_replace('/^-+\s*/', '', $title);
+                $title = preg_replace('/\s*-+$/', '', $title);
+                if (!empty($title) && $title !== '---') {
+                    $parsed['h1_title'] = $title;
+                }
+            }
+            // Pattern 2: After "عنوان محصول (H1)" label
+            if (empty($parsed['h1_title']) && preg_match('/عنوان محصول\s*\(H1\)\s*\n+([^\n]+)/u', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
             }
-            // Pattern 2: عنوان صفحه (H1):
-            elseif (preg_match('/عنوان صفحه\s*\(H1\):\s*(.+)/u', $content, $match)) {
-                $parsed['h1_title'] = trim($match[1]);
-            }
-            // Pattern 3: Simple # heading
-            elseif (preg_match('/^#\s+(.+)$/m', $content, $match)) {
+            // Pattern 3: Simple markdown heading at start
+            if (empty($parsed['h1_title']) && preg_match('/^#\s+([^\n]+)$/m', $content, $match)) {
                 $parsed['h1_title'] = trim($match[1]);
             }
         }
@@ -212,24 +230,36 @@ class SIR_Content_Parser {
         // Slug - try multiple patterns
         if (empty($parsed['slug'])) {
             // Pattern 1: بخش ۲: پیوند یکتا
-            if (preg_match('/##?\s*بخش\s*۲.*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
-                $parsed['slug'] = strtolower(trim($match[1]));
+            if (preg_match('/##?\s*بخش\s*[۲2][:\s].*?(?:پیوند|Slug).*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
+                $slug = strtolower(trim($match[1]));
+                // Remove "---" if captured
+                $slug = preg_replace('/^-+/', '', $slug);
+                $slug = preg_replace('/-+$/', '', $slug);
+                if (!empty($slug) && $slug !== '---' && strlen($slug) > 3) {
+                    $parsed['slug'] = $slug;
+                }
             }
-            // Pattern 2: پیوند یکتا: or Slug:
-            elseif (preg_match('/(?:پیوند یکتا|Slug).*?:\s*([a-z0-9\-]+)/ui', $content, $match)) {
+            // Pattern 2: After label
+            if (empty($parsed['slug']) && preg_match('/(?:پیوند یکتا|Slug)\s*\n+([a-z0-9\-]+)/ui', $content, $match)) {
                 $parsed['slug'] = strtolower(trim($match[1]));
             }
         }
         
-        // Short Description - try multiple patterns
+        // Short Description - try multiple patterns with strict boundaries
         if (empty($parsed['short_description'])) {
-            // Pattern 1: بخش ۳: توضیح کوتاه
-            if (preg_match('/##?\s*بخش\s*۳.*?\n+(.+?)(?=\n##|\n---|\z)/us', $content, $match)) {
-                $parsed['short_description'] = trim($match[1]);
-            }
-            // Pattern 2: توضیح کوتاه:
-            elseif (preg_match('/توضیح کوتاه.*?:\s*\n*(.+?)(?=\n##|\n---|\z)/us', $content, $match)) {
-                $parsed['short_description'] = trim($match[1]);
+            // Pattern 1: بخش ۳: توضیح کوتاه - stop BEFORE بخش ۴ or ---
+            if (preg_match('/##?\s*بخش\s*[۳3][:\s].*?(?:توضیح|Short).*?\n+(.+?)(?=\n---\s*\n##?\s*بخش|\n##?\s*بخش\s*[۴4]|\z)/us', $content, $match)) {
+                $short_desc = trim($match[1]);
+                // Remove separator lines
+                $short_desc = preg_replace('/^-+\s*/', '', $short_desc);
+                $short_desc = preg_replace('/\s*-+$/', '', $short_desc);
+                // Limit to reasonable length (max 300 chars for short description)
+                if (strlen($short_desc) > 300) {
+                    $short_desc = mb_substr($short_desc, 0, 297) . '...';
+                }
+                if (!empty($short_desc) && $short_desc !== '---') {
+                    $parsed['short_description'] = $short_desc;
+                }
             }
         }
         
