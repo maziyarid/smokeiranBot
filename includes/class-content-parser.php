@@ -15,6 +15,9 @@ class SIR_Content_Parser {
             throw new Exception('محتوای خالی برای تجزیه دریافت شد.');
         }
         
+        // Clean JSON blocks from content first
+        $cleaned_content = $this->remove_json_block($raw_content);
+        
         $parsed = [
             // SEO Fields
             'h1_title' => '',
@@ -61,17 +64,32 @@ class SIR_Content_Parser {
         }
         
         // Extract sections from content
-        $this->extract_sections($raw_content, $parsed);
+        $this->extract_sections($cleaned_content, $parsed);
         
         // Build full content
-        $parsed['full_content'] = $this->build_full_content($raw_content);
+        $parsed['full_content'] = $this->build_full_content($cleaned_content);
+        
+        // Generate fallback HTML if full_content is empty or very short
+        if (empty($parsed['full_content']) || strlen($parsed['full_content']) < 100) {
+            $parsed['full_content'] = $this->generate_fallback_html($raw_content, $parsed);
+        }
         
         // Extract SEO meta if not in JSON
-        $this->extract_seo_meta($raw_content, $parsed);
+        $this->extract_seo_meta($cleaned_content, $parsed);
+        
+        // Auto-extract title from HTML if missing
+        if (empty($parsed['h1_title'])) {
+            $parsed['h1_title'] = $this->extract_title_from_html($parsed['full_content']);
+        }
+        
+        // Auto-generate slug if missing
+        if (empty($parsed['slug']) && !empty($parsed['h1_title'])) {
+            $parsed['slug'] = $this->generate_slug($parsed['h1_title']);
+        }
         
         // Parse FAQ if not array
         if (empty($parsed['faq']) || !is_array($parsed['faq'])) {
-            $parsed['faq'] = $this->extract_faq($raw_content);
+            $parsed['faq'] = $this->extract_faq($cleaned_content);
         }
         
         return $parsed;
@@ -154,35 +172,138 @@ class SIR_Content_Parser {
     }
     
     /**
-     * Build full content (excluding JSON)
+     * Build full content (excluding JSON and meta sections)
      */
     private function build_full_content($content) {
         // Remove JSON block
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
-        // Remove meta section (first section)
-        $content = preg_replace('/^### بخش ۱:.*?(?=### بخش ۲:|## )/ms', '', $content);
+        // Try to extract section 4 onwards (HTML content section)
+        // Handle both markdown and plain formats
+        // Pattern 1: With markdown bold and code blocks
+        if (preg_match('/\*\*بخش\s*[۴4].*?\*\*\s*```(?:html)?\s*\n([\s\S]+?)```/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            return $this->clean_html_content($html_content);
+        }
         
-        return trim($content);
+        // Pattern 2: Standard markdown heading
+        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+```(?:html)?\s*\n([\s\S]+?)```/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            return $this->clean_html_content($html_content);
+        }
+        
+        // Pattern 3: Without code blocks
+        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+([\s\S]+?)(?=\n\*\*بخش|\n##?\s*بخش\s*[۵۶۷۸۹5-9](?:[:\s]|$)|$)/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            return $this->clean_html_content($html_content);
+        }
+        
+        // Fallback: Extract everything after section 4 marker
+        if (preg_match('/##?\s*بخش\s*[۴4].*?\n+([\s\S]+)/u', $content, $match)) {
+            return $this->clean_html_content(trim($match[1]));
+        }
+        
+        // Last fallback: Remove first 3 meta sections
+        $content = preg_replace('/^##?\s*بخش\s*[۱۲۳123].*?\n+.*?(?=\n##?\s*بخش\s*[۴4]|\z)/ums', '', $content);
+        
+        return $this->clean_html_content(trim($content));
+    }
+    
+    /**
+     * Clean HTML content - remove markdown artifacts and fix malformed HTML
+     */
+    private function clean_html_content($html_content) {
+        // Remove code block markers if any leaked through
+        $html_content = preg_replace('/^```(?:html)?\s*\n/m', '', $html_content);
+        $html_content = preg_replace('/\n```\s*$/m', '', $html_content);
+        
+        // Clean up malformed HTML - fix broken style attributes
+        $html_content = preg_replace('/;direction:\s*rtl;[^"]*?">/u', '; direction: rtl; text-align: right;">', $html_content);
+        $html_content = preg_replace('/(?<!")style="[^"]*$/m', '', $html_content); // Remove incomplete style attributes
+        
+        return trim($html_content);
     }
     
     /**
      * Extract SEO meta from content
      */
     private function extract_seo_meta($content, &$parsed) {
-        // H1 Title
+        // H1 Title - try multiple patterns
         if (empty($parsed['h1_title'])) {
-            if (preg_match('/عنوان صفحه \(H1\):\s*(.+)/u', $content, $match)) {
-                $parsed['h1_title'] = trim($match[1]);
-            } elseif (preg_match('/^# (.+)$/m', $content, $match)) {
-                $parsed['h1_title'] = trim($match[1]);
+            // Pattern 1: With markdown bold formatting: **بخش ۱:** ```title```
+            if (preg_match('/\*\*بخش\s*[۱1].*?\*\*\s*```\s*\n?(.+?)\n?```/us', $content, $match)) {
+                $title = trim($match[1]);
+                $title = $this->clean_extracted_text($title);
+                if (!empty($title)) {
+                    $parsed['h1_title'] = $title;
+                }
+            }
+            // Pattern 2: Standard markdown heading: ## بخش ۱:
+            if (empty($parsed['h1_title']) && preg_match('/##?\s*بخش\s*[۱1][:\s].*?(?:عنوان|H1).*?\n+([^\n]+?)(?:\n|$)/u', $content, $match)) {
+                $title = trim($match[1]);
+                $title = $this->clean_extracted_text($title);
+                if (!empty($title)) {
+                    $parsed['h1_title'] = $title;
+                }
+            }
+            // Pattern 3: After "عنوان محصول (H1)" label
+            if (empty($parsed['h1_title']) && preg_match('/عنوان محصول\s*\(H1\)\s*\n+([^\n]+)/u', $content, $match)) {
+                $parsed['h1_title'] = $this->clean_extracted_text(trim($match[1]));
+            }
+            // Pattern 4: Simple markdown heading at start
+            if (empty($parsed['h1_title']) && preg_match('/^#\s+([^\n]+)$/m', $content, $match)) {
+                $parsed['h1_title'] = $this->clean_extracted_text(trim($match[1]));
             }
         }
         
-        // Slug
+        // Slug - try multiple patterns
         if (empty($parsed['slug'])) {
-            if (preg_match('/پیوند یکتا.*?:\s*([a-z0-9\-]+)/ui', $content, $match)) {
+            // Pattern 1: With markdown bold and code block: **بخش ۲:** ```slug```
+            if (preg_match('/\*\*بخش\s*[۲2].*?\*\*\s*```\s*\n?([a-z0-9\-]+)\n?```/ui', $content, $match)) {
+                $slug = strtolower(trim($match[1]));
+                if (!empty($slug) && strlen($slug) > 3) {
+                    $parsed['slug'] = $slug;
+                }
+            }
+            // Pattern 2: Standard markdown: ## بخش ۲:
+            if (empty($parsed['slug']) && preg_match('/##?\s*بخش\s*[۲2][:\s].*?(?:پیوند|Slug).*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
+                $slug = strtolower(trim($match[1]));
+                $slug = preg_replace('/^-+/', '', $slug);
+                $slug = preg_replace('/-+$/', '', $slug);
+                if (!empty($slug) && $slug !== '---' && strlen($slug) > 3) {
+                    $parsed['slug'] = $slug;
+                }
+            }
+            // Pattern 3: After label
+            if (empty($parsed['slug']) && preg_match('/(?:پیوند یکتا|Slug)\s*\n+([a-z0-9\-]+)/ui', $content, $match)) {
                 $parsed['slug'] = strtolower(trim($match[1]));
+            }
+        }
+        
+        // Short Description - try multiple patterns with strict boundaries
+        if (empty($parsed['short_description'])) {
+            // Pattern 1: With markdown bold and code block: **بخش ۳:** ```description```
+            if (preg_match('/\*\*بخش\s*[۳3].*?\*\*\s*```\s*\n?(.+?)\n?```/us', $content, $match)) {
+                $short_desc = trim($match[1]);
+                $short_desc = $this->clean_extracted_text($short_desc);
+                if (strlen($short_desc) > 300) {
+                    $short_desc = mb_substr($short_desc, 0, 297) . '...';
+                }
+                if (!empty($short_desc)) {
+                    $parsed['short_description'] = $short_desc;
+                }
+            }
+            // Pattern 2: Standard markdown - stop BEFORE بخش ۴ or ---
+            if (empty($parsed['short_description']) && preg_match('/##?\s*بخش\s*[۳3][:\s].*?(?:توضیح|Short).*?\n+(.+?)(?=\n---\s*\n|\n\*\*بخش|\n##?\s*بخش\s*[۴4]|\z)/us', $content, $match)) {
+                $short_desc = trim($match[1]);
+                $short_desc = $this->clean_extracted_text($short_desc);
+                // Limit to reasonable length (max 300 chars for short description)
+                if (strlen($short_desc) > 300) {
+                    $short_desc = mb_substr($short_desc, 0, 297) . '...';
+                }
+                if (!empty($short_desc)) {
+                    $parsed['short_description'] = $short_desc;
+                }
             }
         }
         
@@ -199,13 +320,31 @@ class SIR_Content_Parser {
                 $parsed['meta_description'] = trim($match[1]);
             }
         }
+    }
+    
+    /**
+     * Clean extracted text - remove separators and markdown artifacts
+     */
+    private function clean_extracted_text($text) {
+        // Remove code block markers
+        $text = preg_replace('/^```\s*/', '', $text);
+        $text = preg_replace('/\s*```$/', '', $text);
         
-        // Short Description
-        if (empty($parsed['short_description'])) {
-            if (preg_match('/### بخش ۲:.*?\n\n(.+?)(?=\n\n|###)/us', $content, $match)) {
-                $parsed['short_description'] = trim($match[1]);
-            }
+        // Remove separator lines
+        $text = preg_replace('/^-+\s*/', '', $text);
+        $text = preg_replace('/\s*-+$/', '', $text);
+        
+        // Remove markdown bold
+        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
+        
+        $text = trim($text);
+        
+        // Return empty if just separators
+        if ($text === '---' || $text === '```' || empty($text)) {
+            return '';
         }
+        
+        return $text;
     }
     
     /**
@@ -267,6 +406,173 @@ class SIR_Content_Parser {
         return '<script type="application/ld+json">' . 
                json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . 
                '</script>';
+    }
+    
+    /**
+     * Remove JSON block from content
+     */
+    private function remove_json_block($content) {
+        // Remove JSON code blocks
+        $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
+        
+        // Remove trailing JSON objects
+        $content = $this->remove_trailing_json_object($content);
+        
+        return $content;
+    }
+    
+    /**
+     * Remove trailing JSON object
+     */
+    private function remove_trailing_json_object($content) {
+        // Pattern to match a trailing JSON object
+        $pattern = '/\{[\s\S]*"(?:product|seo|content|customFields)"[\s\S]*\}\s*$/m';
+        $content = preg_replace($pattern, '', $content);
+        
+        return trim($content);
+    }
+    
+    /**
+     * Generate fallback HTML from content
+     * 3-tier fallback system:
+     * 1. Structured data → Beautiful HTML
+     * 2. Plain text extraction → Formatted paragraphs
+     * 3. Warning message → Styled notice
+     */
+    private function generate_fallback_html($raw_content, $parsed) {
+        // Tier 1: Try to generate from structured data
+        if (!empty($parsed['json_data'])) {
+            $html = $this->generate_html_from_json($parsed['json_data']);
+            if (!empty($html)) {
+                return $html;
+            }
+        }
+        
+        // Tier 2: Extract and format plain text
+        $text_content = $this->extract_plain_text($raw_content);
+        if (!empty($text_content) && strlen($text_content) > 100) {
+            return $this->format_plain_text_to_html($text_content);
+        }
+        
+        // Tier 3: Warning message
+        return $this->generate_warning_html();
+    }
+    
+    /**
+     * Generate HTML from JSON data
+     */
+    private function generate_html_from_json($json_data) {
+        $html = '';
+        
+        // Extract product name
+        $product_name = $json_data['product']['name'] ?? 'محصول';
+        
+        // Start with hero section
+        $html .= '<div class="sir-product-content" style="font-family: \'IRANSans\', Tahoma, Arial, sans-serif; direction: rtl; text-align: right; line-height: 2;">';
+        
+        // Add introduction if available
+        if (!empty($json_data['content']['introduction'])) {
+            $html .= '<div style="margin-bottom: 25px;">';
+            $html .= '<h2>معرفی محصول</h2>';
+            $html .= '<p>' . nl2br(htmlspecialchars($json_data['content']['introduction'])) . '</p>';
+            $html .= '</div>';
+        }
+        
+        // Add features if available
+        if (!empty($json_data['content']['features']) && is_array($json_data['content']['features'])) {
+            $html .= '<div style="margin-bottom: 25px;">';
+            $html .= '<h2>ویژگی‌های کلیدی</h2>';
+            $html .= '<ul>';
+            foreach ($json_data['content']['features'] as $feature) {
+                $html .= '<li>' . htmlspecialchars($feature) . '</li>';
+            }
+            $html .= '</ul>';
+            $html .= '</div>';
+        }
+        
+        $html .= '</div>';
+        
+        return strlen($html) > 200 ? $html : '';
+    }
+    
+    /**
+     * Extract plain text from raw content
+     */
+    private function extract_plain_text($content) {
+        // Remove JSON blocks
+        $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
+        
+        // Remove markdown headers but keep content
+        $content = preg_replace('/^#{1,6}\s+/m', '', $content);
+        
+        // Remove special markers
+        $content = preg_replace('/^---+$/m', '', $content);
+        
+        return trim($content);
+    }
+    
+    /**
+     * Format plain text to HTML
+     */
+    private function format_plain_text_to_html($text) {
+        // Split into paragraphs
+        $paragraphs = explode("\n\n", $text);
+        
+        $html = '<div class="sir-product-content" style="font-family: \'IRANSans\', Tahoma, Arial, sans-serif; direction: rtl; text-align: right; line-height: 2;">';
+        
+        foreach ($paragraphs as $para) {
+            $para = trim($para);
+            if (!empty($para)) {
+                $html .= '<p>' . nl2br(htmlspecialchars($para)) . '</p>';
+            }
+        }
+        
+        $html .= '</div>';
+        
+        return $html;
+    }
+    
+    /**
+     * Generate warning HTML
+     */
+    private function generate_warning_html() {
+        return '<div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0; direction: rtl; text-align: right;">' .
+               '<p style="margin: 0; color: #856404;"><strong>⚠️ هشدار:</strong> محتوای تولید شده به درستی تجزیه نشد. لطفاً محتوا را به صورت دستی بررسی و ویرایش کنید.</p>' .
+               '</div>';
+    }
+    
+    /**
+     * Extract title from HTML content
+     */
+    private function extract_title_from_html($html) {
+        // Try h1 tags
+        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $html, $match)) {
+            return strip_tags($match[1]);
+        }
+        
+        // Try first heading
+        if (preg_match('/<h[2-6][^>]*>(.*?)<\/h[2-6]>/i', $html, $match)) {
+            return strip_tags($match[1]);
+        }
+        
+        return '';
+    }
+    
+    /**
+     * Generate slug from title
+     */
+    private function generate_slug($title) {
+        // Remove special characters and convert to lowercase
+        $slug = preg_replace('/[^a-z0-9\s-]/i', '', $title);
+        $slug = preg_replace('/\s+/', '-', trim($slug));
+        $slug = strtolower($slug);
+        
+        // Limit length
+        if (strlen($slug) > 200) {
+            $slug = substr($slug, 0, 200);
+        }
+        
+        return $slug;
     }
     
     /**
