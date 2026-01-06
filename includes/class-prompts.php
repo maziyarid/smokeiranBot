@@ -475,38 +475,8 @@ PROMPT;
 
 ## ساختار خروجی (فرمت دقیق - الزامی)
 
-⚠️ **فرمت خروجی باید دقیقاً به این صورت باشد:**
+⚠️⚠️⚠️ **فرمت خروجی باید دقیقاً به این صورت باشد - بدون markdown bold یا code blocks:**
 
-```
-## بخش ۱: عنوان محصول (H1)
-[نام کامل محصول با مشخصات - مثلاً: پاد ماد لاست ویپ تلما الیت ۴۰ - باتری ۱۴۰۰ میلیآمپر]
-
----
-
-## بخش ۲: پیوند یکتا (Slug/Permalink)
-[slug-with-dashes-in-english]
-
----
-
-## بخش ۳: توضیح کوتاه ووکامرس (Short Description)
-[۲-۳ جمله توضیح کوتاه برای نمایش در لیست محصولات]
-
----
-
-## بخش ۴: کد HTML کامل (محتوای اصلی)
-
-[اینجا تمام HTML زیبا با تگ‌ها، استایل‌ها، آیکون‌ها قرار میگیرد]
-[شامل Hero، Feature Cards، جداول، نقاط قوت/ضعف، FAQ و...]
-[حداقل ۱۵۰۰ کلمه محتوای کامل]
-
----
-
-## بخش ۵-۱۸: بخش‌های تکمیلی
-[بقیه بخش‌ها...]
-```
-
-**مثال واقعی:**
-```
 ## بخش ۱: عنوان محصول (H1)
 پاد ماد لاست ویپ تلما الیت ۴۰ - باتری ۱۴۰۰ میلیآمپر
 
@@ -524,10 +494,39 @@ lost-vape-thelema-elite-40-pod-mod
 
 ## بخش ۴: کد HTML کامل (محتوای اصلی)
 
-<div class="sir-product-content" style="...">
+<div class="sir-product-content" style="font-family: 'IRANSans', Tahoma, Arial, sans-serif; direction: rtl; text-align: right; line-height: 1.8;">
   <!-- Hero Section -->
-  <div style="background: linear-gradient(135deg, #e91e63, #f06292); ...">
-    <h1><i class="fa-solid fa-star"></i> Lost Vape Thelema Elite 40</h1>
+  <div style="background: linear-gradient(135deg, #e91e63, #f06292); padding: 30px; border-radius: 16px; margin-bottom: 25px; color: white; text-align: center;">
+    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">
+      <i class="fa-solid fa-star"></i> Lost Vape Thelema Elite 40
+    </h1>
+    <p style="margin: 15px 0 0; opacity: 0.9;">پاد ماد پیشرفته با باتری ۱۴۰۰mAh</p>
+  </div>
+  
+  <!-- تمام HTML اینجا -->
+</div>
+
+---
+
+**❌ اشتباه (استفاده نکن):**
+```
+**بخش ۱: عنوان محصول**
+```
+عنوان محصول
+```
+```
+
+**✅ صحیح (استفاده کن):**
+```
+## بخش ۱: عنوان محصول (H1)
+عنوان محصول
+```
+
+**قوانین فرمت:**
+1. هر بخش با `##` شروع شود (نه `**`)
+2. متن بخش مستقیماً بعد از عنوان بخش بیاید (بدون code blocks)
+3. بخش‌ها با `---` جدا شوند
+4. فقط HTML در بخش ۴ قرار گیرد (نه در بخش ۱-۳)
   </div>
   
   <!-- تمام محتوا اینجا -->

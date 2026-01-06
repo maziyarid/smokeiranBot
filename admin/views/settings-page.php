@@ -52,6 +52,7 @@ $settings = [
                     </div>
                     <span class="sir-help">
                         از <a href="https://tavily.com" target="_blank">tavily.com</a> دریافت کنید - برای تحقیق محصول
+                        <br>💡 <strong>نکته:</strong> برای کاهش مصرف توکن، می‌توانید از مدل‌های Blackbox با قابلیت جستجوی داخلی استفاده کنید.
                     </span>
                     <div class="sir-api-status" id="tavily-status"></div>
                 </div>
@@ -76,6 +77,12 @@ $settings = [
                             </option>
                         </optgroup>
                         <optgroup label="قدرتمند و پریمیوم">
+                            <option value="anthropic/claude-opus-4" <?php selected($settings['claude_model'], 'anthropic/claude-opus-4'); ?>>
+                                Claude Opus 4 (قویترین - پیشنهادی برای کیفیت) ⭐⭐⭐
+                            </option>
+                            <option value="anthropic/claude-3-opus" <?php selected($settings['claude_model'], 'anthropic/claude-3-opus'); ?>>
+                                Claude 3 Opus (بسیار قدرتمند)
+                            </option>
                             <option value="openai/gpt-4o" <?php selected($settings['claude_model'], 'openai/gpt-4o'); ?>>
                                 GPT-4o (قدرتمند)
                             </option>

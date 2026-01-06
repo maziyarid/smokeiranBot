@@ -179,26 +179,49 @@ class SIR_Content_Parser {
         $content = preg_replace('/```json[\s\S]*?```/m', '', $content);
         
         // Try to extract section 4 onwards (HTML content section)
-        // Match from بخش ۴ to the end, but stop at بخش following sections that aren't part of HTML
-        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+([\s\S]+?)(?=\n##?\s*بخش\s*[۵۶۷۸۹5-9](?:[:\s]|$)|$)/u', $content, $match)) {
+        // Handle both markdown and plain formats
+        // Pattern 1: With markdown bold and code blocks
+        if (preg_match('/\*\*بخش\s*[۴4].*?\*\*\s*```(?:html)?\s*\n([\s\S]+?)```/u', $content, $match)) {
             $html_content = trim($match[1]);
-            
-            // Clean up malformed HTML - fix broken style attributes
-            $html_content = preg_replace('/;direction:\s*rtl;[^"]*?">/u', '; direction: rtl; text-align: right;">', $html_content);
-            $html_content = preg_replace('/(?<!")style="[^"]*$/m', '', $html_content); // Remove incomplete style attributes
-            
-            return $html_content;
+            return $this->clean_html_content($html_content);
+        }
+        
+        // Pattern 2: Standard markdown heading
+        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+```(?:html)?\s*\n([\s\S]+?)```/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            return $this->clean_html_content($html_content);
+        }
+        
+        // Pattern 3: Without code blocks
+        if (preg_match('/##?\s*بخش\s*[۴4][:\s].*?(?:کد HTML|محتوای اصلی|HTML).*?\n+([\s\S]+?)(?=\n\*\*بخش|\n##?\s*بخش\s*[۵۶۷۸۹5-9](?:[:\s]|$)|$)/u', $content, $match)) {
+            $html_content = trim($match[1]);
+            return $this->clean_html_content($html_content);
         }
         
         // Fallback: Extract everything after section 4 marker
         if (preg_match('/##?\s*بخش\s*[۴4].*?\n+([\s\S]+)/u', $content, $match)) {
-            return trim($match[1]);
+            return $this->clean_html_content(trim($match[1]));
         }
         
         // Last fallback: Remove first 3 meta sections
         $content = preg_replace('/^##?\s*بخش\s*[۱۲۳123].*?\n+.*?(?=\n##?\s*بخش\s*[۴4]|\z)/ums', '', $content);
         
-        return trim($content);
+        return $this->clean_html_content(trim($content));
+    }
+    
+    /**
+     * Clean HTML content - remove markdown artifacts and fix malformed HTML
+     */
+    private function clean_html_content($html_content) {
+        // Remove code block markers if any leaked through
+        $html_content = preg_replace('/^```(?:html)?\s*\n/m', '', $html_content);
+        $html_content = preg_replace('/\n```\s*$/m', '', $html_content);
+        
+        // Clean up malformed HTML - fix broken style attributes
+        $html_content = preg_replace('/;direction:\s*rtl;[^"]*?">/u', '; direction: rtl; text-align: right;">', $html_content);
+        $html_content = preg_replace('/(?<!")style="[^"]*$/m', '', $html_content); // Remove incomplete style attributes
+        
+        return trim($html_content);
     }
     
     /**
@@ -207,39 +230,51 @@ class SIR_Content_Parser {
     private function extract_seo_meta($content, &$parsed) {
         // H1 Title - try multiple patterns
         if (empty($parsed['h1_title'])) {
-            // Pattern 1: بخش ۱: عنوان محصول (H1) - capture title on same or next line
-            if (preg_match('/##?\s*بخش\s*[۱1][:\s].*?(?:عنوان|H1).*?\n+([^\n]+?)(?:\n|$)/u', $content, $match)) {
+            // Pattern 1: With markdown bold formatting: **بخش ۱:** ```title```
+            if (preg_match('/\*\*بخش\s*[۱1].*?\*\*\s*```\s*\n?(.+?)\n?```/us', $content, $match)) {
                 $title = trim($match[1]);
-                // Remove "---" separators if present
-                $title = preg_replace('/^-+\s*/', '', $title);
-                $title = preg_replace('/\s*-+$/', '', $title);
-                if (!empty($title) && $title !== '---') {
+                $title = $this->clean_extracted_text($title);
+                if (!empty($title)) {
                     $parsed['h1_title'] = $title;
                 }
             }
-            // Pattern 2: After "عنوان محصول (H1)" label
-            if (empty($parsed['h1_title']) && preg_match('/عنوان محصول\s*\(H1\)\s*\n+([^\n]+)/u', $content, $match)) {
-                $parsed['h1_title'] = trim($match[1]);
+            // Pattern 2: Standard markdown heading: ## بخش ۱:
+            if (empty($parsed['h1_title']) && preg_match('/##?\s*بخش\s*[۱1][:\s].*?(?:عنوان|H1).*?\n+([^\n]+?)(?:\n|$)/u', $content, $match)) {
+                $title = trim($match[1]);
+                $title = $this->clean_extracted_text($title);
+                if (!empty($title)) {
+                    $parsed['h1_title'] = $title;
+                }
             }
-            // Pattern 3: Simple markdown heading at start
+            // Pattern 3: After "عنوان محصول (H1)" label
+            if (empty($parsed['h1_title']) && preg_match('/عنوان محصول\s*\(H1\)\s*\n+([^\n]+)/u', $content, $match)) {
+                $parsed['h1_title'] = $this->clean_extracted_text(trim($match[1]));
+            }
+            // Pattern 4: Simple markdown heading at start
             if (empty($parsed['h1_title']) && preg_match('/^#\s+([^\n]+)$/m', $content, $match)) {
-                $parsed['h1_title'] = trim($match[1]);
+                $parsed['h1_title'] = $this->clean_extracted_text(trim($match[1]));
             }
         }
         
         // Slug - try multiple patterns
         if (empty($parsed['slug'])) {
-            // Pattern 1: بخش ۲: پیوند یکتا
-            if (preg_match('/##?\s*بخش\s*[۲2][:\s].*?(?:پیوند|Slug).*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
+            // Pattern 1: With markdown bold and code block: **بخش ۲:** ```slug```
+            if (preg_match('/\*\*بخش\s*[۲2].*?\*\*\s*```\s*\n?([a-z0-9\-]+)\n?```/ui', $content, $match)) {
                 $slug = strtolower(trim($match[1]));
-                // Remove "---" if captured
+                if (!empty($slug) && strlen($slug) > 3) {
+                    $parsed['slug'] = $slug;
+                }
+            }
+            // Pattern 2: Standard markdown: ## بخش ۲:
+            if (empty($parsed['slug']) && preg_match('/##?\s*بخش\s*[۲2][:\s].*?(?:پیوند|Slug).*?\n+([a-z0-9\-]+)(?:\n|$)/ui', $content, $match)) {
+                $slug = strtolower(trim($match[1]));
                 $slug = preg_replace('/^-+/', '', $slug);
                 $slug = preg_replace('/-+$/', '', $slug);
                 if (!empty($slug) && $slug !== '---' && strlen($slug) > 3) {
                     $parsed['slug'] = $slug;
                 }
             }
-            // Pattern 2: After label
+            // Pattern 3: After label
             if (empty($parsed['slug']) && preg_match('/(?:پیوند یکتا|Slug)\s*\n+([a-z0-9\-]+)/ui', $content, $match)) {
                 $parsed['slug'] = strtolower(trim($match[1]));
             }
@@ -247,17 +282,26 @@ class SIR_Content_Parser {
         
         // Short Description - try multiple patterns with strict boundaries
         if (empty($parsed['short_description'])) {
-            // Pattern 1: بخش ۳: توضیح کوتاه - stop BEFORE بخش ۴ or ---
-            if (preg_match('/##?\s*بخش\s*[۳3][:\s].*?(?:توضیح|Short).*?\n+(.+?)(?=\n---\s*\n##?\s*بخش|\n##?\s*بخش\s*[۴4]|\z)/us', $content, $match)) {
+            // Pattern 1: With markdown bold and code block: **بخش ۳:** ```description```
+            if (preg_match('/\*\*بخش\s*[۳3].*?\*\*\s*```\s*\n?(.+?)\n?```/us', $content, $match)) {
                 $short_desc = trim($match[1]);
-                // Remove separator lines
-                $short_desc = preg_replace('/^-+\s*/', '', $short_desc);
-                $short_desc = preg_replace('/\s*-+$/', '', $short_desc);
+                $short_desc = $this->clean_extracted_text($short_desc);
+                if (strlen($short_desc) > 300) {
+                    $short_desc = mb_substr($short_desc, 0, 297) . '...';
+                }
+                if (!empty($short_desc)) {
+                    $parsed['short_description'] = $short_desc;
+                }
+            }
+            // Pattern 2: Standard markdown - stop BEFORE بخش ۴ or ---
+            if (empty($parsed['short_description']) && preg_match('/##?\s*بخش\s*[۳3][:\s].*?(?:توضیح|Short).*?\n+(.+?)(?=\n---\s*\n|\n\*\*بخش|\n##?\s*بخش\s*[۴4]|\z)/us', $content, $match)) {
+                $short_desc = trim($match[1]);
+                $short_desc = $this->clean_extracted_text($short_desc);
                 // Limit to reasonable length (max 300 chars for short description)
                 if (strlen($short_desc) > 300) {
                     $short_desc = mb_substr($short_desc, 0, 297) . '...';
                 }
-                if (!empty($short_desc) && $short_desc !== '---') {
+                if (!empty($short_desc)) {
                     $parsed['short_description'] = $short_desc;
                 }
             }
@@ -276,6 +320,31 @@ class SIR_Content_Parser {
                 $parsed['meta_description'] = trim($match[1]);
             }
         }
+    }
+    
+    /**
+     * Clean extracted text - remove separators and markdown artifacts
+     */
+    private function clean_extracted_text($text) {
+        // Remove code block markers
+        $text = preg_replace('/^```\s*/', '', $text);
+        $text = preg_replace('/\s*```$/', '', $text);
+        
+        // Remove separator lines
+        $text = preg_replace('/^-+\s*/', '', $text);
+        $text = preg_replace('/\s*-+$/', '', $text);
+        
+        // Remove markdown bold
+        $text = preg_replace('/\*\*(.+?)\*\*/', '$1', $text);
+        
+        $text = trim($text);
+        
+        // Return empty if just separators
+        if ($text === '---' || $text === '```' || empty($text)) {
+            return '';
+        }
+        
+        return $text;
     }
     
     /**
