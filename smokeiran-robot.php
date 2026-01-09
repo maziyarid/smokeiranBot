@@ -119,7 +119,7 @@ register_activation_hook(__FILE__, function() {
     $defaults = [
         'sir_blackbox_api_key' => '',
         'sir_tavily_api_key' => '',
-        'sir_claude_model' => 'claude-sonnet-4-20250514',
+        'sir_claude_model' => 'blackboxai/x-ai/grok-code-fast-1:free',
         'sir_auto_publish' => 'draft',
         'sir_enable_logging' => 'yes',
     ];

@@ -9,12 +9,12 @@ class SIR_Blackbox_API {
     
     private $api_key;
     private $model;
-    private $base_url = 'https://api.blackbox.ai/api/chat';
+    private $base_url = 'https://api.blackbox.ai/chat/completions';
     private $timeout = 300;
     
     public function __construct() {
         $this->api_key = trim(get_option('sir_blackbox_api_key', ''));
-        $this->model = get_option('sir_claude_model', 'claude-sonnet-4-20250514');
+        $this->model = get_option('sir_claude_model', 'blackboxai/x-ai/grok-code-fast-1:free');
     }
     
     /**
@@ -113,9 +113,23 @@ class SIR_Blackbox_API {
         $body = json_decode(wp_remote_retrieve_body($response), true);
         
         if ($status_code !== 200) {
-            $error_msg = isset($body['error']['message']) 
-                ? $body['error']['message'] 
-                : "خطای HTTP {$status_code}";
+            // Enhanced error handling for debugging
+            $error_msg = '';
+            if (isset($body['error']['message'])) {
+                $error_msg = $body['error']['message'];
+            } elseif (isset($body['error']) && is_string($body['error'])) {
+                $error_msg = $body['error'];
+            } elseif (isset($body['message'])) {
+                $error_msg = $body['message'];
+            } else {
+                $error_msg = "خطای HTTP {$status_code}";
+            }
+            
+            // Log full error details for debugging without exposing in user message
+            if (current_user_can('manage_options') && defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Blackbox API Error: ' . json_encode($body, JSON_UNESCAPED_UNICODE));
+            }
+            
             throw new Exception("خطای API: {$error_msg}");
         }
         
@@ -130,6 +144,10 @@ class SIR_Blackbox_API {
             $content = $body['text'];
         } elseif (isset($body['content'])) {
             $content = is_array($body['content']) ? $body['content'][0]['text'] : $body['content'];
+        } elseif (isset($body['result'])) {
+            $content = $body['result'];
+        } elseif (isset($body['output'])) {
+            $content = $body['output'];
         }
         
         if (empty($content)) {
