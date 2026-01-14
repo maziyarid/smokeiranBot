@@ -157,18 +157,38 @@ class SIR_Custom_Fields {
     }
     
     /**
+     * Get supported vape brands
+     * 
+     * @return array List of supported brand names
+     */
+    public static function get_supported_brands() {
+        $brands = [
+            'VOOPOO', 'Vaporesso', 'UWELL', 'GeekVape', 'SMOK', 'Aspire', 'Innokin', 
+            'Lost Vape', 'Eleaf', 'Joyetech', 'Vapefly', 'Vandy Vape', 'Hellvape', 
+            'Wotofo', 'OXVA', 'Freemax', 'Asvape'
+        ];
+        
+        /**
+         * Filter the list of supported vape brands
+         * 
+         * @param array $brands List of brand names
+         */
+        return apply_filters('sir_supported_brands', $brands);
+    }
+    
+    /**
      * Generate custom fields from research data
      */
     public static function generate_from_research($research_data) {
         $fields = [];
         
-        // Battery capacity
+        // Battery capacity - multiple patterns
         if (preg_match('/(\d+)\s*mAh/i', $research_data, $match)) {
             $fields['batteryCapacity'] = $match[1] . ' mAh';
         }
         
-        // Output power
-        if (preg_match('/(\d+)\s*[Ww](?:att)?/i', $research_data, $match)) {
+        // Output power - multiple patterns
+        if (preg_match('/(\d+(?:-\d+)?)\s*[Ww](?:att)?/i', $research_data, $match)) {
             $fields['outputPower'] = $match[1] . 'W';
         }
         
@@ -177,8 +197,19 @@ class SIR_Custom_Fields {
             $fields['tankCapacity'] = $match[1] . ' ml';
         }
         
-        // Brand extraction
-        $brands = ['VOOPOO', 'Vaporesso', 'UWELL', 'GeekVape', 'SMOK', 'Aspire', 'Innokin', 'Lost Vape', 'Eleaf'];
+        // Coil resistance - multiple patterns
+        if (preg_match('/(\d+(?:\.\d+)?)\s*[Ωω]|(\d+(?:\.\d+)?)\s*ohm/i', $research_data, $match)) {
+            $resistance = $match[1] ?? $match[2];
+            $fields['coilResistance'] = $resistance . 'Ω';
+        }
+        
+        // Resistance range
+        if (preg_match('/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*[Ωω]/i', $research_data, $match)) {
+            $fields['resistance_range'] = $match[1] . '-' . $match[2] . 'Ω';
+        }
+        
+        // Brand extraction using filterable list
+        $brands = self::get_supported_brands();
         foreach ($brands as $brand) {
             if (stripos($research_data, $brand) !== false) {
                 $fields['brand'] = $brand;
@@ -186,16 +217,107 @@ class SIR_Custom_Fields {
             }
         }
         
-        // Charging type
-        if (stripos($research_data, 'Type-C') !== false || stripos($research_data, 'USB-C') !== false) {
+        // Model extraction - look for common patterns
+        if (preg_match('/(?:مدل|model)[:\s]+([A-Za-z0-9\s\-]+)/ui', $research_data, $match)) {
+            $fields['model'] = trim($match[1]);
+        }
+        
+        // Charging type - multiple patterns
+        if (stripos($research_data, 'Type-C') !== false || stripos($research_data, 'USB-C') !== false || stripos($research_data, 'USB Type C') !== false) {
             $fields['chargingType'] = 'USB Type-C';
         } elseif (stripos($research_data, 'Micro USB') !== false) {
             $fields['chargingType'] = 'Micro USB';
         }
         
-        // Country
-        if (stripos($research_data, 'Shenzhen') !== false || stripos($research_data, 'China') !== false) {
+        // Display type
+        if (preg_match('/(?:OLED|TFT|LCD)\s*(?:display|screen|نمایشگر)/i', $research_data, $match)) {
+            $fields['displayType'] = trim($match[0]);
+        } elseif (stripos($research_data, 'OLED') !== false) {
+            $fields['displayType'] = 'OLED Display';
+        } elseif (stripos($research_data, 'TFT') !== false) {
+            $fields['displayType'] = 'TFT Display';
+        }
+        
+        // Chipset
+        if (preg_match('/(?:chipset|چیپست)[:\s]+([A-Za-z0-9\s\.\-]+)/ui', $research_data, $match)) {
+            $fields['chipset'] = trim($match[1]);
+        } elseif (preg_match('/(GENE|AXON|IQ|Quest|Omni)\s*(?:chipset|chip)?/i', $research_data, $match)) {
+            $fields['chipset'] = trim($match[0]);
+        }
+        
+        // Weight
+        if (preg_match('/(\d+(?:\.\d+)?)\s*(?:g|گرم|gram)/i', $research_data, $match)) {
+            $fields['weight'] = $match[1] . 'g';
+        }
+        
+        // Dimensions
+        if (preg_match('/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*mm/i', $research_data, $match)) {
+            $fields['dimensions'] = "{$match[1]}×{$match[2]}×{$match[3]} mm";
+        }
+        
+        // Materials - look for common vape materials
+        $material_patterns = [
+            'Zinc Alloy', 'Aluminum', 'Stainless Steel', 'PCTG', 'PC', 
+            'Pyrex Glass', 'Leather', 'Carbon Fiber'
+        ];
+        $found_materials = [];
+        foreach ($material_patterns as $material) {
+            if (stripos($research_data, $material) !== false) {
+                $found_materials[] = $material;
+            }
+        }
+        if (!empty($found_materials)) {
+            $fields['materials'] = implode(', ', array_unique($found_materials));
+        }
+        
+        // Airflow
+        if (preg_match('/(?:airflow|جریان هوا)[:\s]+([^\n\r\.]+)/ui', $research_data, $match)) {
+            $fields['airflow'] = trim($match[1]);
+        } elseif (stripos($research_data, 'adjustable airflow') !== false) {
+            $fields['airflow'] = 'Adjustable Airflow';
+        } elseif (stripos($research_data, 'bottom airflow') !== false) {
+            $fields['airflow'] = 'Bottom Airflow';
+        }
+        
+        // Fill type
+        if (stripos($research_data, 'side fill') !== false || stripos($research_data, 'side-fill') !== false) {
+            $fields['fill_type'] = 'Side Fill';
+        } elseif (stripos($research_data, 'top fill') !== false || stripos($research_data, 'top-fill') !== false) {
+            $fields['fill_type'] = 'Top Fill';
+        } elseif (stripos($research_data, 'bottom fill') !== false) {
+            $fields['fill_type'] = 'Bottom Fill';
+        }
+        
+        // Country - more patterns
+        if (stripos($research_data, 'Shenzhen') !== false || 
+            stripos($research_data, 'China') !== false || 
+            stripos($research_data, 'چین') !== false ||
+            stripos($research_data, 'شنژن') !== false) {
             $fields['country'] = 'چین';
+        }
+        
+        // Warranty
+        if (preg_match('/(?:warranty|گارانتی)[:\s]+([^\n\r\.]+)/ui', $research_data, $match)) {
+            $fields['warranty'] = trim($match[1]);
+        } elseif (preg_match('/(\d+)\s*(?:month|ماه|year|سال)\s*(?:warranty|گارانتی)/ui', $research_data, $match)) {
+            $fields['warranty'] = trim($match[0]);
+        }
+        
+        // Colors - extract from lists or mentions
+        if (preg_match_all('/(?:color|رنگ)[s]*[:\s]+([^\n\r\.]+)/ui', $research_data, $matches)) {
+            $colors = [];
+            foreach ($matches[1] as $color_text) {
+                $color_list = preg_split('/[,،;]/', $color_text);
+                foreach ($color_list as $color) {
+                    $color = trim($color);
+                    if (!empty($color) && strlen($color) < 50) {
+                        $colors[] = $color;
+                    }
+                }
+            }
+            if (!empty($colors)) {
+                $fields['colors'] = array_unique($colors);
+            }
         }
         
         return $fields;

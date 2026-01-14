@@ -74,6 +74,15 @@ class SIR_Content_Parser {
             $parsed['faq'] = $this->extract_faq($raw_content);
         }
         
+        // Extract and merge custom fields from content if not in JSON
+        if (empty($parsed['custom_fields'])) {
+            $parsed['custom_fields'] = SIR_Custom_Fields::generate_from_research($raw_content);
+        } else {
+            // Merge detected fields with JSON fields (JSON takes priority)
+            $detected_fields = SIR_Custom_Fields::generate_from_research($raw_content);
+            $parsed['custom_fields'] = array_merge($detected_fields, $parsed['custom_fields']);
+        }
+        
         return $parsed;
     }
     

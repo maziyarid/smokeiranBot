@@ -102,10 +102,37 @@ class SIR_Tavily_API {
         ]);
         
         if (is_wp_error($response)) {
-            return ['error' => $response->get_error_message(), 'answer' => '', 'sources' => []];
+            $error_msg = $response->get_error_message();
+            // Sanitize error message to avoid logging sensitive data
+            $safe_error_msg = preg_replace('/api[_-]?key[:\s]*[^\s]+/i', 'api_key: [REDACTED]', $error_msg);
+            error_log("Tavily API Error: {$safe_error_msg}");
+            return ['error' => $error_msg, 'answer' => '', 'sources' => []];
         }
         
-        $result = json_decode(wp_remote_retrieve_body($response), true);
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body_raw = wp_remote_retrieve_body($response);
+        
+        if (empty($body_raw)) {
+            error_log("Tavily API: Empty response body (HTTP {$status_code})");
+            return ['error' => "پاسخ خالی (HTTP {$status_code})", 'answer' => '', 'sources' => []];
+        }
+        
+        $result = json_decode($body_raw, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $json_error = json_last_error_msg();
+            error_log("Tavily API: JSON parse error - {$json_error}");
+            return ['error' => "خطای تجزیه JSON: {$json_error}", 'answer' => '', 'sources' => []];
+        }
+        
+        // Check for API error in response
+        if ($status_code !== 200) {
+            $error_msg = $result['error'] ?? $result['message'] ?? "خطای HTTP {$status_code}";
+            // Sanitize error before logging
+            $safe_error = preg_replace('/api[_-]?key[:\s]*[^\s]+/i', 'api_key: [REDACTED]', $error_msg);
+            error_log("Tavily API Error ({$status_code}): {$safe_error}");
+            return ['error' => $error_msg, 'answer' => '', 'sources' => []];
+        }
         
         return [
             'answer' => $result['answer'] ?? '',
@@ -115,7 +142,8 @@ class SIR_Tavily_API {
                     'url' => $r['url'] ?? '',
                     'content' => $r['content'] ?? ''
                 ];
-            }, $result['results'] ?? [])
+            }, $result['results'] ?? []),
+            'error' => ''
         ];
     }
     
@@ -238,6 +266,13 @@ class SIR_Tavily_API {
      */
     public function test_connection() {
         try {
+            if (empty($this->api_key)) {
+                return [
+                    'success' => false,
+                    'message' => '❌ کلید API تنظیم نشده است'
+                ];
+            }
+            
             $response = wp_remote_post($this->base_url, [
                 'timeout' => 30,
                 'headers' => ['Content-Type' => 'application/json'],
@@ -251,29 +286,47 @@ class SIR_Tavily_API {
             if (is_wp_error($response)) {
                 return [
                     'success' => false,
-                    'message' => $response->get_error_message()
+                    'message' => '❌ ' . $response->get_error_message()
                 ];
             }
             
             $code = wp_remote_retrieve_response_code($response);
+            $body_raw = wp_remote_retrieve_body($response);
             
             if ($code === 200) {
-                return [
-                    'success' => true,
-                    'message' => '✅ اتصال به Tavily API برقرار است'
-                ];
+                // Validate JSON response
+                $data = json_decode($body_raw, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return [
+                        'success' => true,
+                        'message' => '✅ اتصال به Tavily API برقرار است'
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => '❌ پاسخ نامعتبر: ' . json_last_error_msg()
+                    ];
+                }
             }
             
-            $body = json_decode(wp_remote_retrieve_body($response), true);
+            $body = json_decode($body_raw, true);
+            $error_msg = "خطای HTTP {$code}";
+            
+            if (isset($body['error'])) {
+                $error_msg .= ': ' . (is_string($body['error']) ? $body['error'] : json_encode($body['error']));
+            } elseif (isset($body['message'])) {
+                $error_msg .= ': ' . $body['message'];
+            }
+            
             return [
                 'success' => false,
-                'message' => $body['error'] ?? "خطای HTTP {$code}"
+                'message' => '❌ ' . $error_msg
             ];
             
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => '❌ ' . $e->getMessage()
             ];
         }
     }
